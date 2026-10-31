@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Export Markdown</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<style>:root {
+  --bg-main: #f8f9fa;
+  --bg-panel: #ffffff;
+  --bg-toolbar: #ffffff;
+  --border-color: #e0e4e8;
+  --text-main: #2c3e50;
+  --text-muted: #6c757d;
+  --accent: #4a90e2;
+  --accent-hover: #357abd;
+  --danger: #e74c3c;
+  --radius: 8px;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg-panel);
+  color: var(--text-main);
+  max-width: 860px;
+  margin: 40px auto;
+  padding: 0 24px 60px;
+  line-height: 1.7;
+}
+
+#preview-panel { flex: 1 1 0%; min-width: 0px; }
+body { flex: 1 1 0%; overflow-y: auto; padding: 40px; line-height: 1.7; scroll-behavior: smooth; }
+h1, h2, h3 { margin-top: 1.5em; margin-bottom: 0.5em; font-weight: 700; }
+h1 { font-size: 2.2em; border-bottom: 2px solid #e0e4e8; padding-bottom: 10px; }
+h2 { font-size: 1.6em; border-bottom: 1px solid #e0e4e8; padding-bottom: 5px; }
+p { margin-bottom: 1em; }
+a { color: #4a90e2; text-decoration: none; }
+code { background: #f8f9fa; padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 0.9em; border: 1px solid #e0e4e8; }
+pre { background: rgb(246, 248, 250); padding: 16px; border-radius: 8px; overflow-x: auto; margin-bottom: 1em; border: 1px solid #e0e4e8; }
+pre code { background: transparent; border: medium; padding: 0px; }
+blockquote { border-left: 4px solid #4a90e2; padding: 0px 15px; color: #6c757d; margin: 0px 0px 1em; font-style: italic; }
+table { border-collapse: collapse; width: 100%; margin-bottom: 1em; }
+th, td { border: 1px solid #e0e4e8; padding: 8px 12px; }
+th { background: #f8f9fa; }
+img { max-width: 100%; border-radius: 8px; }
+.view-editor-only #preview-panel, .view-editor-only .resizer { display: none; }
+
+/* Fallback espliciti: assicurano i bordi delle tabelle anche se l'estrazione
+   delle regole #preview dovesse in futuro cambiare selettori o ordine. */
+table { border-collapse: collapse; border-spacing: 0; }
+th, td { border: 1px solid #e0e4e8; padding: 8px 12px; }
+th { background: #f8f9fa; }
+
+/* Forza la stampa di colori e bordi (altrimenti alcuni browser attenuano
+   i colori chiari durante la stampa / esportazione PDF) */
+* {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Margini pagina puliti per PDF / stampa */
+@page { margin: 12mm; }
+
+/* Override specifici per la stampa: bordi più scuri per essere sempre visibili
+   su carta bianca, indipendentemente dal tema attivo. */
+@media print {
+  body { margin: 0; padding: 0; }
+  th, td { border: 1px solid #666 !important; }
+  th { background: #f5f5f5 !important; }
+  pre, blockquote, table { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body><h1 id="header-0">📘 Documentazione Completa: gamma-2d.js</h1>
+<p>Libreria JavaScript 2D minimalista ispirata a <strong>p5.js</strong>, progettata per creare giochi e animazioni interattive direttamente nel browser usando l'elemento <code>&lt;canvas&gt;</code>. Offre un'API semplice e intuitiva con supporto per sprite, animazioni, emoji, forme geometriche, collisioni pixel-perfect, drag &amp; drop, audio e molto altro.</p>
+<hr>
+<h2 id="header-1">📑 Indice</h2>
+<ol>
+<li><a href="#1-panoramica-e-filosofia">Panoramica e Filosofia</a></li>
+<li><a href="#2-installazione-e-setup">Installazione e Setup</a></li>
+<li><a href="#3-ciclo-di-vita-e-hook-globali">Ciclo di Vita e Hook Globali</a></li>
+<li><a href="#4-propriet%C3%A0-globali">Proprietà Globali</a></li>
+<li><a href="#5-gestione-canvas-e-sfondo">Gestione Canvas e Sfondo</a></li>
+<li><a href="#6-disegno-base-fill-stroke-text">Disegno Base: Fill, Stroke, Text</a></li>
+<li><a href="#7-classe-vector">Classe <code>Vector</code></a></li>
+<li><a href="#8-funzioni-matematiche-e-utility">Funzioni Matematiche e Utility</a></li>
+<li><a href="#9-input-tastiera-e-mouse">Input: Tastiera e Mouse</a></li>
+<li><a href="#10-classe-sprite">Classe <code>Sprite</code></a></li>
+<li><a href="#11-classe-esprite-emoji-sprite">Classe <code>eSprite</code> (Emoji Sprite)</a></li>
+<li><a href="#12-classe-rect">Classe <code>Rect</code></a></li>
+<li><a href="#13-classe-ellipse">Classe <code>Ellipse</code></a></li>
+<li><a href="#14-classe-button">Classe <code>Button</code></a></li>
+<li><a href="#15-classe-sound">Classe <code>Sound</code></a></li>
+<li><a href="#16-sistema-di-tag-e-gruppi">Sistema di Tag e Gruppi</a></li>
+<li><a href="#17-debug-mode-e-frame-rate">Debug Mode e Frame Rate</a></li>
+<li><a href="#18-esempi-completi">Esempi Completi</a></li>
+<li><a href="#19-best-practice-e-note">Best Practice e Note</a></li>
+</ol>
+<hr>
+<h2 id="header-2">1. Panoramica e Filosofia</h2>
+<p><code>gamma-2d.js</code> è una libreria <strong>leggera</strong> (un singolo file, nessuna dipendenza) che espone funzioni globali simili a <strong>p5.js</strong> (<code>fill</code>, <code>text</code>, <code>background</code>, ecc.) arricchite con classi per oggetti di gioco (<code>Sprite</code>, <code>Rect</code>, <code>Ellipse</code>, <code>Button</code>, <code>eSprite</code>, <code>Sound</code>).</p>
+<p><strong>Caratteristiche principali:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>🎨 <strong>Disegno 2D</strong></td>
+<td>Funzioni globali per sfondo, forme, testo</td>
+</tr>
+<tr>
+<td>🖼️ <strong>Sprite</strong></td>
+<td>Con animazione, rotazione, flip, maschere pixel-perfect</td>
+</tr>
+<tr>
+<td>😀 <strong>eSprite</strong></td>
+<td>Sprite basati su emoji (nessuna immagine richiesta)</td>
+</tr>
+<tr>
+<td>🎮 <strong>Collisioni</strong></td>
+<td>AABB + pixel-perfect per sprite con maschera</td>
+</tr>
+<tr>
+<td>🖱️ <strong>Input</strong></td>
+<td>Mouse, tastiera, touch</td>
+</tr>
+<tr>
+<td>🖱️ <strong>Drag &amp; Drop</strong></td>
+<td>Built-in per tutti gli oggetti</td>
+</tr>
+<tr>
+<td>🔊 <strong>Audio</strong></td>
+<td>Classe <code>Sound</code> con loop e volume</td>
+</tr>
+<tr>
+<td>🏷️ <strong>Tag/Gruppi</strong></td>
+<td>Organizzazione degli sprite per collisioni di gruppo</td>
+</tr>
+<tr>
+<td>🐞 <strong>Debug Mode</strong></td>
+<td>FPS, coordinate mouse, bounding box</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="header-3">2. Installazione e Setup</h2>
+<p>Includi il file nel tuo HTML <strong>prima</strong> del tuo script di gioco:</p>
+<pre><code class="language-html hljs language-xml" data-highlighted="yes"><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">"gamma-2d.js"</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">"game.js"</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
+</code></pre>
+<h3 id="header-4">Script di gioco minimo (<code>game.js</code>)</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">800</span>, <span class="hljs-number">600</span>);
+}
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">background</span>(<span class="hljs-number">200</span>);
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'red'</span>);
+    <span class="hljs-title function_">text</span>(<span class="hljs-string">'Ciao!'</span>, <span class="hljs-number">20</span>, <span class="hljs-number">20</span>);
+}
+</code></pre>
+<blockquote>
+<p>⚠️ <strong>Non serve chiamare <code>createMiniCanvas</code> se non vuoi</strong>: la libreria crea automaticamente un canvas 600×400 al caricamento.</p>
+</blockquote>
+<hr>
+<h2 id="header-5">3. Ciclo di Vita e Hook Globali</h2>
+<p>La libreria cerca automaticamente queste funzioni globali e le chiama se definite:</p>
+<table>
+<thead>
+<tr>
+<th>Hook</th>
+<th>Quando viene chiamato</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>setup()</code></td>
+<td>Una volta, al caricamento (dopo il DOM).</td>
+</tr>
+<tr>
+<td><code>draw()</code></td>
+<td>Ad ogni frame (60 FPS di default).</td>
+</tr>
+<tr>
+<td><code>keyPressed(event)</code></td>
+<td>Ad ogni <code>keydown</code> del browser.</td>
+</tr>
+<tr>
+<td><code>keyReleased(event)</code></td>
+<td>Ad ogni <code>keyup</code> del browser.</td>
+</tr>
+<tr>
+<td><code>mouseClicked(event)</code></td>
+<td>Ad ogni click sul canvas.</td>
+</tr>
+</tbody></table>
+<p><strong>Nota:</strong> <code>draw()</code> inizia ad essere chiamato <strong>solo dopo che tutti gli sprite sono stati caricati</strong> (se presenti).</p>
+<hr>
+<h2 id="header-6">4. Proprietà Globali</h2>
+<p>Queste proprietà sono esposte come <strong>getter globali</strong> (sola lettura):</p>
+<table>
+<thead>
+<tr>
+<th>Proprietà</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>mouseX</code></td>
+<td><code>number</code></td>
+<td>X del mouse <strong>relativa al canvas</strong></td>
+</tr>
+<tr>
+<td><code>mouseY</code></td>
+<td><code>number</code></td>
+<td>Y del mouse relativa al canvas</td>
+</tr>
+<tr>
+<td><code>mousePressed</code></td>
+<td><code>boolean</code></td>
+<td><code>true</code> se il tasto sinistro è premuto</td>
+</tr>
+<tr>
+<td><code>width</code></td>
+<td><code>number</code></td>
+<td>Larghezza del canvas</td>
+</tr>
+<tr>
+<td><code>height</code></td>
+<td><code>number</code></td>
+<td>Altezza del canvas</td>
+</tr>
+<tr>
+<td><code>frameCount</code></td>
+<td><code>number</code></td>
+<td>Numero di frame disegnati dall'inizio</td>
+</tr>
+</tbody></table>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-keyword">if</span> (mousePressed) {
+        <span class="hljs-title function_">fill</span>(<span class="hljs-string">'red'</span>);
+    } <span class="hljs-keyword">else</span> {
+        <span class="hljs-title function_">fill</span>(<span class="hljs-string">'blue'</span>);
+    }
+    <span class="hljs-title function_">text</span>(<span class="hljs-string">`Frame: <span class="hljs-subst">${frameCount}</span>`</span>, <span class="hljs-number">10</span>, <span class="hljs-number">30</span>);
+}
+</code></pre>
+<hr>
+<h2 id="header-7">5. Gestione Canvas e Sfondo</h2>
+<h3 id="header-8"><code>createMiniCanvas(w, h)</code></h3>
+<p>Crea (o ridimensiona) il canvas principale.</p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Default</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>w</code></td>
+<td>number</td>
+<td>600</td>
+<td>Larghezza</td>
+</tr>
+<tr>
+<td><code>h</code></td>
+<td>number</td>
+<td>400</td>
+<td>Altezza</td>
+</tr>
+</tbody></table>
+<p><strong>Ritorna:</strong> l'elemento <code>&lt;canvas&gt;</code>.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">1024</span>, <span class="hljs-number">768</span>);
+</code></pre>
+<blockquote>
+<p>Se il canvas esiste già (id <code>minicanvas</code>), viene ridimensionato.</p>
+</blockquote>
+<hr>
+<h3 id="header-9"><code>background(color | r, g, b | imagePath)</code></h3>
+<p>Imposta lo sfondo. Può essere:</p>
+<ul>
+<li><strong>Colore CSS</strong>: <code>background('skyblue')</code></li>
+<li><strong>RGB</strong>: <code>background(255, 200, 100)</code></li>
+<li><strong>Scala di grigi</strong>: <code>background(128)</code></li>
+<li><strong>Immagine</strong>: <code>background('assets/sfondo.png')</code></li>
+</ul>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-title function_">background</span>(<span class="hljs-string">'black'</span>);
+<span class="hljs-title function_">background</span>(<span class="hljs-number">30</span>, <span class="hljs-number">60</span>, <span class="hljs-number">90</span>);
+<span class="hljs-title function_">background</span>(<span class="hljs-string">'assets/space.jpg'</span>); <span class="hljs-comment">// riempie tutto il canvas</span>
+</code></pre>
+<blockquote>
+<p>⚠️ Le immagini di sfondo vengono ridimensionate per riempire il canvas.</p>
+</blockquote>
+<hr>
+<h3 id="header-10"><code>clear()</code></h3>
+<p>Pulisce tutto il canvas (trasparente).</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">clear</span>(); <span class="hljs-comment">// utile per disegnare con scie</span>
+}
+</code></pre>
+<hr>
+<h2 id="header-11">6. Disegno Base: Fill, Stroke, Text</h2>
+<h3 id="header-12"><code>fill(color | r, g, b)</code></h3>
+<p>Imposta il colore di riempimento per le forme successive.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-title function_">fill</span>(<span class="hljs-string">'red'</span>);
+<span class="hljs-title function_">fill</span>(<span class="hljs-number">255</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>);
+<span class="hljs-title function_">fill</span>(<span class="hljs-number">200</span>); <span class="hljs-comment">// grigio</span>
+</code></pre>
+<h3 id="header-13"><code>stroke(color | r, g, b)</code></h3>
+<p>Imposta il colore del bordo.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-title function_">stroke</span>(<span class="hljs-string">'black'</span>);
+</code></pre>
+<h3 id="header-14"><code>noStroke()</code></h3>
+<p>Disattiva il bordo per le forme successive.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-title function_">noStroke</span>();
+</code></pre>
+<h3 id="header-15"><code>strokeWeight(w)</code></h3>
+<p>Imposta lo spessore del bordo in pixel.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-title function_">strokeWeight</span>(<span class="hljs-number">4</span>);
+</code></pre>
+<h3 id="header-16"><code>text(str, x, y)</code></h3>
+<p>Disegna del testo.</p>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>str</code></td>
+<td>string/number</td>
+<td>Il testo</td>
+</tr>
+<tr>
+<td><code>x</code></td>
+<td>number</td>
+<td>Coordinata X</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td>number</td>
+<td>Coordinata Y</td>
+</tr>
+</tbody></table>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-title function_">text</span>(<span class="hljs-string">'Punteggio: '</span> + punteggio, <span class="hljs-number">10</span>, <span class="hljs-number">30</span>);
+</code></pre>
+<h3 id="header-17"><code>textSize(size)</code></h3>
+<p>Imposta la dimensione del font (in pixel).</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-title function_">textSize</span>(<span class="hljs-number">24</span>);
+</code></pre>
+<h3 id="header-18"><code>textAlign(alignment)</code></h3>
+<p>Imposta l'allineamento orizzontale: <code>'left'</code>, <code>'center'</code>, <code>'right'</code>.</p>
+<h3 id="header-19"><code>textBaseline(baseline)</code></h3>
+<p>Imposta l'allineamento verticale: <code>'top'</code>, <code>'middle'</code>, <code>'bottom'</code>, <code>'alphabetic'</code>.</p>
+<h3 id="header-20"><code>textWidth(str)</code></h3>
+<p>Restituisce la larghezza in pixel del testo con il font corrente.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> w = <span class="hljs-title function_">textWidth</span>(<span class="hljs-string">'Ciao'</span>);
+</code></pre>
+<p><strong>Esempio completo:</strong></p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">background</span>(<span class="hljs-number">240</span>);
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'navy'</span>);
+    <span class="hljs-title function_">textSize</span>(<span class="hljs-number">32</span>);
+    <span class="hljs-title function_">textAlign</span>(<span class="hljs-string">'center'</span>);
+    <span class="hljs-title function_">textBaseline</span>(<span class="hljs-string">'middle'</span>);
+    <span class="hljs-title function_">text</span>(<span class="hljs-string">'Benvenuto!'</span>, width / <span class="hljs-number">2</span>, height / <span class="hljs-number">2</span>);
+    <span class="hljs-title function_">textAlign</span>(<span class="hljs-string">'left'</span>);
+    <span class="hljs-title function_">textBaseline</span>(<span class="hljs-string">'alphabetic'</span>);
+}
+</code></pre>
+<hr>
+<h2 id="header-21">7. Classe <code>Vector</code></h2>
+<p>Un vettore 2D mutable, con metodi <strong>fluent</strong> (ritornano <code>this</code>).</p>
+<h3 id="header-22">Costruttore</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">new</span> <span class="hljs-title class_">Vector</span>(x = <span class="hljs-number">0</span>, y = <span class="hljs-number">0</span>)
+</code></pre>
+<h3 id="header-23">Metodi d'istanza</h3>
+<table>
+<thead>
+<tr>
+<th>Metodo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>copy()</code></td>
+<td>Ritorna un nuovo Vector con gli stessi valori</td>
+</tr>
+<tr>
+<td><code>add(v)</code></td>
+<td>Somma un Vector <strong>o uno scalare</strong> (fluent)</td>
+</tr>
+<tr>
+<td><code>sub(v)</code></td>
+<td>Sottrae un Vector o scalare</td>
+</tr>
+<tr>
+<td><code>mult(n)</code></td>
+<td>Moltiplica per scalare</td>
+</tr>
+<tr>
+<td><code>div(n)</code></td>
+<td>Divide per scalare (ignora divisione per 0)</td>
+</tr>
+<tr>
+<td><code>mag()</code></td>
+<td>Restituisce il modulo (lunghezza)</td>
+</tr>
+<tr>
+<td><code>normalize()</code></td>
+<td>Normalizza a lunghezza 1 (fluent)</td>
+</tr>
+<tr>
+<td><code>dist(v)</code></td>
+<td>Distanza dal vettore <code>v</code></td>
+</tr>
+</tbody></table>
+<h3 id="header-24">Metodi statici</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-title class_">Vector</span>.<span class="hljs-title function_">add</span>(v1, v2)   <span class="hljs-comment">// ritorna nuovo Vector</span>
+<span class="hljs-title class_">Vector</span>.<span class="hljs-title function_">sub</span>(v1, v2)   <span class="hljs-comment">// ritorna nuovo Vector</span>
+<span class="hljs-title class_">Vector</span>.<span class="hljs-title function_">dist</span>(v1, v2)  <span class="hljs-comment">// numero</span>
+</code></pre>
+<h3 id="header-25">Esempio</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> vel = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vector</span>(<span class="hljs-number">3</span>, -<span class="hljs-number">2</span>);
+<span class="hljs-keyword">const</span> acc = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vector</span>(<span class="hljs-number">0</span>, <span class="hljs-number">0.5</span>);
+vel.<span class="hljs-title function_">add</span>(acc).<span class="hljs-title function_">mult</span>(<span class="hljs-number">0.98</span>); <span class="hljs-comment">// attrito</span>
+
+<span class="hljs-comment">// Applicare un impulso</span>
+<span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">' '</span>)) {
+    vel.<span class="hljs-property">y</span> = -<span class="hljs-number">10</span>;
+}
+</code></pre>
+<blockquote>
+<p>💡 <code>Vector</code> è usato internamente da <code>Sprite</code>, <code>Rect</code>, <code>Ellipse</code> e <code>eSprite</code> (proprietà <code>vel</code> e <code>gravityVec</code>).</p>
+</blockquote>
+<hr>
+<h2 id="header-26">8. Funzioni Matematiche e Utility</h2>
+<h3 id="header-27"><code>map(value, start1, stop1, start2, stop2)</code></h3>
+<p>Rimappa <code>value</code> dall'intervallo <code>[start1, stop1]</code> a <code>[start2, stop2]</code>.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> normalized = <span class="hljs-title function_">map</span>(mouseX, <span class="hljs-number">0</span>, width, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>);
+</code></pre>
+<h3 id="header-28"><code>constrain(value, min, max)</code></h3>
+<p>Limita <code>value</code> tra <code>min</code> e <code>max</code>.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> x = <span class="hljs-title function_">constrain</span>(mouseX, <span class="hljs-number">50</span>, width - <span class="hljs-number">50</span>);
+</code></pre>
+<h3 id="header-29"><code>randomInt(min, max)</code></h3>
+<p>Intero casuale <strong>incluso</strong> tra <code>min</code> e <code>max</code>.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> d6 = <span class="hljs-title function_">randomInt</span>(<span class="hljs-number">1</span>, <span class="hljs-number">6</span>); <span class="hljs-comment">// 1..6 inclusi</span>
+</code></pre>
+<h3 id="header-30"><code>dist(objA, objB)</code></h3>
+<p>Distanza tra <strong>i centri</strong> di due oggetti con proprietà <code>x, y, w, h</code>.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> d = <span class="hljs-title function_">dist</span>(player, nemico);
+<span class="hljs-keyword">if</span> (d &lt; <span class="hljs-number">100</span>) { <span class="hljs-comment">/* vicini */</span> }
+</code></pre>
+<blockquote>
+<p>⚠️ Non usare con <code>Vector</code>: usa <code>Vector.dist(v1, v2)</code> in quel caso.</p>
+</blockquote>
+<h3 id="header-31"><code>shuffle(array)</code></h3>
+<p>Mescola <strong>in-place</strong> un array (Fisher–Yates). Ritorna l'array stesso.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> mazzo = <span class="hljs-title function_">shuffle</span>([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>]);
+</code></pre>
+<h3 id="header-32"><code>extractRandom(array)</code></h3>
+<p>Estrae e <strong>rimuove</strong> un elemento casuale dall'array. Ritorna <code>undefined</code> se vuoto.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> carta = <span class="hljs-title function_">extractRandom</span>(mazzo);
+<span class="hljs-keyword">if</span> (carta !== <span class="hljs-literal">undefined</span>) { <span class="hljs-comment">/* ... */</span> }
+</code></pre>
+<hr>
+<h2 id="header-33">9. Input: Tastiera e Mouse</h2>
+<h3 id="header-34"><code>keyIsDown(key)</code></h3>
+<p>Verifica se un tasto è premuto. Accetta:</p>
+<ul>
+<li><strong>Numero</strong> (keyCode): <code>keyIsDown(37)</code> (freccia sinistra)</li>
+<li><strong>Stringa singola</strong>: <code>keyIsDown('a')</code>, <code>keyIsDown(' ')</code></li>
+<li><strong>Nome speciale</strong>: <code>'arrowleft'</code>, <code>'arrowup'</code>, <code>'arrowright'</code>, <code>'arrowdown'</code>, <code>'escape'</code>, <code>'enter'</code>, <code>'backspace'</code>, <code>'tab'</code>, <code>'shift'</code>, <code>'control'</code>, <code>'alt'</code></li>
+</ul>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowright'</span>)) player.<span class="hljs-property">x</span> += <span class="hljs-number">5</span>;
+<span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">' '</span>)) <span class="hljs-title function_">spara</span>();
+</code></pre>
+<h3 id="header-35"><code>keyWasReleased(key)</code></h3>
+<p>Come <code>keyIsDown</code> ma verifica il <strong>rilascio</strong> nel frame corrente (utile per azioni "one-shot" da tastiera).</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyWasReleased</span>(<span class="hljs-string">'enter'</span>)) {
+    <span class="hljs-title function_">avviaPartita</span>();
+}
+</code></pre>
+<h3 id="header-36">Mouse</h3>
+<ul>
+<li><code>mouseX</code>, <code>mouseY</code> → coordinate</li>
+<li><code>mousePressed</code> → <code>true</code> se premuto</li>
+<li>Hook <code>mouseClicked(event)</code> → chiamata ad ogni click</li>
+</ul>
+<blockquote>
+<p>Per il <strong>click singolo ripetibile</strong>, è meglio usare <code>Button.isClicked()</code> o gestire manualmente lo stato.</p>
+</blockquote>
+<hr>
+<h2 id="header-37">10. Classe <code>Sprite</code></h2>
+<p>Rappresenta uno sprite basato su immagine con animazione, rotazione, flip, collisioni pixel-perfect, drag &amp; drop, gravità.</p>
+<h3 id="header-38">Costruttore</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(imagePath, x, y, w, h, name = <span class="hljs-literal">null</span>, tag = <span class="hljs-literal">null</span>)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>imagePath</code></td>
+<td>string</td>
+<td>URL immagine (anche base64)</td>
+</tr>
+<tr>
+<td><code>x, y</code></td>
+<td>number</td>
+<td>Posizione angolo superiore sinistro</td>
+</tr>
+<tr>
+<td><code>w, h</code></td>
+<td>number</td>
+<td>Dimensioni</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>(opzionale) Nome univoco per <code>getSpriteByName</code></td>
+</tr>
+<tr>
+<td><code>tag</code></td>
+<td>string</td>
+<td>(opzionale) Gruppo per <code>getSpritesByTag</code></td>
+</tr>
+</tbody></table>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(<span class="hljs-string">'player.png'</span>, <span class="hljs-number">100</span>, <span class="hljs-number">100</span>, <span class="hljs-number">64</span>, <span class="hljs-number">64</span>, <span class="hljs-string">'player'</span>, <span class="hljs-string">'giocatori'</span>);
+</code></pre>
+<h3 id="header-39">Proprietà pubbliche</h3>
+<table>
+<thead>
+<tr>
+<th>Proprietà</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>x, y, w, h</code></td>
+<td>number</td>
+<td>Posizione e dimensioni</td>
+</tr>
+<tr>
+<td><code>visible</code></td>
+<td>boolean</td>
+<td>Se <code>false</code>, non viene disegnato né collide</td>
+</tr>
+<tr>
+<td><code>vel</code></td>
+<td>Vector</td>
+<td>Velocità</td>
+</tr>
+<tr>
+<td><code>gravityVec</code></td>
+<td>Vector</td>
+<td>Accelerazione gravitazionale</td>
+</tr>
+<tr>
+<td><code>rotation</code></td>
+<td>number</td>
+<td>Rotazione in radianti</td>
+</tr>
+<tr>
+<td><code>flipH</code></td>
+<td>boolean</td>
+<td>Flip orizzontale</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>Nome (impostato dal costruttore)</td>
+</tr>
+<tr>
+<td><code>tag</code></td>
+<td>string</td>
+<td>Gruppo (impostato dal costruttore)</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>HTMLImageElement</td>
+<td>L'immagine caricata</td>
+</tr>
+<tr>
+<td><code>mask</code></td>
+<td>Uint8ClampedArray</td>
+<td>Maschera alpha per collisioni pixel-perfect</td>
+</tr>
+<tr>
+<td><code>frame</code></td>
+<td>object</td>
+<td>Stato animazione</td>
+</tr>
+</tbody></table>
+<h3 id="header-40">Metodi principali</h3>
+<h4><code>draw()</code></h4>
+<p>Disegna lo sprite. Va chiamato <strong>ogni frame</strong> dentro <code>draw()</code>.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    player.<span class="hljs-title function_">draw</span>();
+}
+</code></pre>
+<h4><code>animate(frameW, frameH, totalFrames, fps = 10, startFrame = 0)</code></h4>
+<p>Configura un'animazione <strong>spritesheet</strong> (le cornici sono in orizzontale).</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes">player.<span class="hljs-title function_">animate</span>(<span class="hljs-number">64</span>, <span class="hljs-number">64</span>, <span class="hljs-number">8</span>, <span class="hljs-number">12</span>); <span class="hljs-comment">// 8 frame 64x64 a 12 FPS</span>
+</code></pre>
+<h4><code>changeImage(newImagePath)</code></h4>
+<p>Cambia l'immagine dello sprite (ricarica anche la maschera).</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes">player.<span class="hljs-title function_">changeImage</span>(<span class="hljs-string">'player_hit.png'</span>);
+</code></pre>
+<h4><code>getImage()</code>, <code>getPath()</code></h4>
+<p>Getter dell'immagine caricata e del percorso.</p>
+<h4><code>flip(enable)</code> / <code>flipV(enable)</code></h4>
+<p>Imposta flip orizzontale / verticale.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes">player.<span class="hljs-title function_">flip</span>(<span class="hljs-literal">true</span>);  <span class="hljs-comment">// specchia orizzontalmente</span>
+player.<span class="hljs-title function_">flipV</span>(<span class="hljs-literal">true</span>); <span class="hljs-comment">// capovolge verticalmente</span>
+</code></pre>
+<h4><code>rotate(degrees)</code></h4>
+<p>Imposta la rotazione <strong>in gradi</strong> (internamente convertita in radianti).</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes">player.<span class="hljs-title function_">rotate</span>(<span class="hljs-number">45</span>);
+</code></pre>
+<h4><code>addGravity(Vector)</code></h4>
+<p>Imposta la gravità applicata dall'utente (non applicata automaticamente — devi integrarla in <code>vel</code> nel tuo <code>draw()</code>).</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> <span class="hljs-variable constant_">GRAVITY</span> = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vector</span>(<span class="hljs-number">0</span>, <span class="hljs-number">0.5</span>);
+player.<span class="hljs-title function_">addGravity</span>(<span class="hljs-variable constant_">GRAVITY</span>);
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    player.<span class="hljs-property">vel</span>.<span class="hljs-title function_">add</span>(player.<span class="hljs-property">gravityVec</span>);
+    player.<span class="hljs-property">x</span> += player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span>;
+    player.<span class="hljs-property">y</span> += player.<span class="hljs-property">vel</span>.<span class="hljs-property">y</span>;
+    player.<span class="hljs-title function_">draw</span>();
+}
+</code></pre>
+<h4><code>collidesWith(otherSprite)</code></h4>
+<p>Collisione <strong>pixel-perfect</strong> se entrambi hanno maschera, altrimenti <strong>AABB</strong>.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">if</span> (player.<span class="hljs-title function_">collidesWith</span>(nemico)) {
+    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">'COLPITO!'</span>);
+}
+</code></pre>
+<h4><code>isHovered()</code></h4>
+<p><code>true</code> se il mouse è sopra il rettangolo dello sprite (ignora rotazione/flip).</p>
+<h4><code>isDragged()</code></h4>
+<p>Se lo sprite è sotto il mouse e premuto, lo trascina. Ritorna <code>true</code> mentre è in corso il drag.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    player.<span class="hljs-title function_">isDragged</span>(); <span class="hljs-comment">// gestisce il drag automaticamente</span>
+    player.<span class="hljs-title function_">draw</span>();
+}
+</code></pre>
+<blockquote>
+<p>💡 Solo <strong>un oggetto alla volta</strong> può essere trascinato in tutta la libreria.</p>
+</blockquote>
+<h4><code>markForDeletion()</code></h4>
+<p>Marca lo sprite per l'eliminazione logica (flag <code>_toDelete</code>). Devi tu rimuoverlo dall'array nel tuo codice.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes">nemico.<span class="hljs-title function_">markForDeletion</span>();
+
+<span class="hljs-comment">// Nel tuo update:</span>
+nemici = nemici.<span class="hljs-title function_">filter</span>(<span class="hljs-function"><span class="hljs-params">n</span> =&gt;</span> !n.<span class="hljs-property">_toDelete</span>);
+</code></pre>
+<h4><code>setTag(tag)</code></h4>
+<p>Cambia il gruppo di appartenenza (aggiunge al nuovo gruppo; il vecchio gruppo <strong>non viene pulito automaticamente</strong> — comportamento attuale).</p>
+<h4><code>getName()</code>, <code>getCount()</code>, <code>setCount(value)</code></h4>
+<p>Metadati utili per logica di gioco.</p>
+<hr>
+<h2 id="header-41">11. Classe <code>eSprite</code> (Emoji Sprite)</h2>
+<p>Versione leggera di <code>Sprite</code> basata su <strong>emoji</strong> — ideale per prototipi rapidi senza asset grafici.</p>
+<h3 id="header-42">Costruttore</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">new</span> <span class="hljs-title function_">eSprite</span>(emojiText, x, y, size = <span class="hljs-number">30</span>)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>emojiText</code></td>
+<td>string</td>
+<td>Emoji (es. <code>'😀'</code>, <code>'🚀'</code>)</td>
+</tr>
+<tr>
+<td><code>x, y</code></td>
+<td>number</td>
+<td>Posizione angolo superiore sinistro</td>
+</tr>
+<tr>
+<td><code>size</code></td>
+<td>number</td>
+<td>Dimensione font in pixel</td>
+</tr>
+</tbody></table>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> player = <span class="hljs-keyword">new</span> <span class="hljs-title function_">eSprite</span>(<span class="hljs-string">'🚀'</span>, <span class="hljs-number">100</span>, <span class="hljs-number">100</span>, <span class="hljs-number">48</span>);
+</code></pre>
+<h3 id="header-43">Differenze rispetto a <code>Sprite</code></h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th><code>Sprite</code></th>
+<th><code>eSprite</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Immagine</td>
+<td>✅</td>
+<td>❌ (usa emoji)</td>
+</tr>
+<tr>
+<td>Animazione</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Collisione pixel-perfect</td>
+<td>✅</td>
+<td>❌ (solo AABB)</td>
+</tr>
+<tr>
+<td>Rotazione/Flip</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Drag &amp; Drop</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Gravità</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>changeImage()</code></td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><code>changeEmoji()</code></td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>getEmoji()</code></td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+</tbody></table>
+<h3 id="header-44">Metodi</h3>
+<table>
+<thead>
+<tr>
+<th>Metodo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>draw()</code></td>
+<td>Disegna l'emoji</td>
+</tr>
+<tr>
+<td><code>changeEmoji(str)</code></td>
+<td>Cambia l'emoji</td>
+</tr>
+<tr>
+<td><code>getEmoji()</code></td>
+<td>Ritorna l'emoji corrente</td>
+</tr>
+<tr>
+<td><code>flip(enable)</code> / <code>flipV(enable)</code></td>
+<td>Flip orizzontale / verticale</td>
+</tr>
+<tr>
+<td><code>rotate(degrees)</code></td>
+<td>Rotazione in gradi</td>
+</tr>
+<tr>
+<td><code>addGravity(Vector)</code></td>
+<td>Imposta gravità</td>
+</tr>
+<tr>
+<td><code>collidesWith(other)</code></td>
+<td>AABB</td>
+</tr>
+<tr>
+<td><code>isHovered()</code></td>
+<td>Mouse sopra</td>
+</tr>
+<tr>
+<td><code>isDragged()</code></td>
+<td>Drag &amp; drop</td>
+</tr>
+<tr>
+<td><code>markForDeletion()</code></td>
+<td>Flag eliminazione</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>⚠️ <code>eSprite.w</code> viene calcolato <strong>al primo <code>draw()</code></strong> (dipende dal rendering del font). Prima del primo draw, <code>w = 0</code>.</p>
+</blockquote>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> cuore = <span class="hljs-keyword">new</span> <span class="hljs-title function_">eSprite</span>(<span class="hljs-string">'❤️'</span>, <span class="hljs-number">100</span>, <span class="hljs-number">100</span>, <span class="hljs-number">32</span>);
+cuore.<span class="hljs-title function_">changeEmoji</span>(<span class="hljs-string">'💔'</span>);
+</code></pre>
+<hr>
+<h2 id="header-45">12. Classe <code>Rect</code></h2>
+<p>Rettangolo disegnabile, con drag &amp; drop, collisioni, gravità.</p>
+<h3 id="header-46">Costruttore</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(x, y, w, h)
+</code></pre>
+<h3 id="header-47">Proprietà</h3>
+<table>
+<thead>
+<tr>
+<th>Proprietà</th>
+<th>Tipo</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>x, y, w, h</code></td>
+<td>number</td>
+</tr>
+<tr>
+<td><code>visible</code></td>
+<td>boolean</td>
+</tr>
+<tr>
+<td><code>vel</code></td>
+<td>Vector</td>
+</tr>
+<tr>
+<td><code>gravityVec</code></td>
+<td>Vector</td>
+</tr>
+</tbody></table>
+<h3 id="header-48">Metodi</h3>
+<table>
+<thead>
+<tr>
+<th>Metodo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>draw()</code></td>
+<td>Disegna il rettangolo con <code>fill</code>/<code>stroke</code> correnti</td>
+</tr>
+<tr>
+<td><code>addGravity(v)</code></td>
+<td>Imposta gravità</td>
+</tr>
+<tr>
+<td><code>collidesWith(other)</code></td>
+<td>AABB</td>
+</tr>
+<tr>
+<td><code>isHovered()</code></td>
+<td>Mouse sopra</td>
+</tr>
+<tr>
+<td><code>isDragged()</code></td>
+<td>Drag &amp; drop</td>
+</tr>
+<tr>
+<td><code>markForDeletion()</code></td>
+<td>Flag eliminazione</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>💡 Il colore viene da <code>fill()</code> e <code>stroke()</code> globali al momento di <code>draw()</code>.</p>
+</blockquote>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> piattaforma = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(<span class="hljs-number">0</span>, <span class="hljs-number">500</span>, <span class="hljs-number">800</span>, <span class="hljs-number">20</span>);
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'brown'</span>);
+    piattaforma.<span class="hljs-title function_">draw</span>();
+}
+</code></pre>
+<hr>
+<h2 id="header-49">13. Classe <code>Ellipse</code></h2>
+<p>Ellisse disegnabile. <strong>Nota:</strong> <code>x</code> e <code>y</code> rappresentano il <strong>centro</strong>, non l'angolo.</p>
+<h3 id="header-50">Costruttore</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">new</span> <span class="hljs-title class_">Ellipse</span>(x, y, w, h)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Parametro</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>x, y</code></td>
+<td><strong>Centro</strong> dell'ellisse</td>
+</tr>
+<tr>
+<td><code>w, h</code></td>
+<td>Diametri (larghezza e altezza totali)</td>
+</tr>
+</tbody></table>
+<h3 id="header-51">Metodi</h3>
+<p>Identici a <code>Rect</code>: <code>draw()</code>, <code>addGravity()</code>, <code>collidesWith()</code>, <code>isHovered()</code>, <code>isDragged()</code>, <code>markForDeletion()</code>.</p>
+<blockquote>
+<p>⚠️ <strong>Differenza importante:</strong> a differenza di <code>Rect</code> e <code>Sprite</code>, in <code>Ellipse</code> il punto <code>(x, y)</code> è il <strong>centro</strong>. In <code>Rect</code> è l'angolo superiore sinistro.</p>
+</blockquote>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> palla = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Ellipse</span>(<span class="hljs-number">400</span>, <span class="hljs-number">300</span>, <span class="hljs-number">60</span>, <span class="hljs-number">60</span>); <span class="hljs-comment">// cerchio di 60px centrato in (400,300)</span>
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'red'</span>);
+    palla.<span class="hljs-title function_">draw</span>();
+}
+</code></pre>
+<hr>
+<h2 id="header-52">14. Classe <code>Button</code></h2>
+<p>Pulsante cliccabile con stati hover/pressed automatici.</p>
+<h3 id="header-53">Costruttore</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">new</span> <span class="hljs-title class_">Button</span>(x, y, w, h, textLabel)
+</code></pre>
+<h3 id="header-54">Proprietà pubbliche (personalizzabili)</h3>
+<table>
+<thead>
+<tr>
+<th>Proprietà</th>
+<th>Default</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>bgColor</code></td>
+<td><code>'rgb(0, 150, 255)'</code></td>
+<td>Colore di sfondo</td>
+</tr>
+<tr>
+<td><code>hoverColor</code></td>
+<td><code>'rgb(0, 180, 255)'</code></td>
+<td>Colore hover</td>
+</tr>
+<tr>
+<td><code>activeColor</code></td>
+<td><code>'rgb(0, 100, 200)'</code></td>
+<td>Colore premuto</td>
+</tr>
+<tr>
+<td><code>textColor</code></td>
+<td><code>'white'</code></td>
+<td>Colore testo</td>
+</tr>
+<tr>
+<td><code>textSize</code></td>
+<td><code>20</code></td>
+<td>Dimensione testo</td>
+</tr>
+<tr>
+<td><code>label</code></td>
+<td>stringa</td>
+<td>Testo del pulsante</td>
+</tr>
+<tr>
+<td><code>visible</code></td>
+<td><code>true</code></td>
+<td>Se <code>false</code>, non disegnato e non interattivo</td>
+</tr>
+</tbody></table>
+<h3 id="header-55">Metodi</h3>
+<table>
+<thead>
+<tr>
+<th>Metodo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>draw()</code></td>
+<td>Disegna il pulsante (chiama <strong>sempre</strong> prima <code>isClicked()</code>)</td>
+</tr>
+<tr>
+<td><code>isClicked()</code></td>
+<td>Ritorna <code>true</code> <strong>una volta sola</strong> al click (edge detection)</td>
+</tr>
+<tr>
+<td><code>isHovered()</code></td>
+<td><code>true</code> se mouse sopra</td>
+</tr>
+</tbody></table>
+<h3 id="header-56">Esempio</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">let</span> bottone = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Button</span>(<span class="hljs-number">300</span>, <span class="hljs-number">400</span>, <span class="hljs-number">200</span>, <span class="hljs-number">60</span>, <span class="hljs-string">'START'</span>);
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">background</span>(<span class="hljs-number">30</span>);
+    bottone.<span class="hljs-title function_">draw</span>();
+    
+    <span class="hljs-keyword">if</span> (bottone.<span class="hljs-title function_">isClicked</span>()) {
+        <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">'Partita avviata!'</span>);
+    }
+}
+</code></pre>
+<blockquote>
+<p>⚠️ L'ordine conta: <strong>prima <code>draw()</code>, poi <code>isClicked()</code></strong> (per aggiornare gli stati).</p>
+</blockquote>
+<hr>
+<h2 id="header-57">15. Classe <code>Sound</code></h2>
+<p>Wrapper attorno all'elemento <code>&lt;audio&gt;</code> con loop e volume.</p>
+<h3 id="header-58">Costruttore</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">new</span> <span class="hljs-title class_">Sound</span>(<span class="hljs-string">'assets/musica.mp3'</span>)
+</code></pre>
+<h3 id="header-59">Metodi</h3>
+<table>
+<thead>
+<tr>
+<th>Metodo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>play()</code></td>
+<td>Riproduce dall'inizio</td>
+</tr>
+<tr>
+<td><code>stop()</code></td>
+<td>Ferma e riavvolge</td>
+</tr>
+<tr>
+<td><code>loop()</code></td>
+<td>Riproduce in loop infinito</td>
+</tr>
+<tr>
+<td><code>noLoop()</code></td>
+<td>Disattiva il loop</td>
+</tr>
+<tr>
+<td><code>setVolume(v)</code></td>
+<td>Volume tra <code>0.0</code> e <code>1.0</code></td>
+</tr>
+<tr>
+<td><code>isPlaying()</code></td>
+<td><code>true</code> se in riproduzione</td>
+</tr>
+</tbody></table>
+<h3 id="header-60">Esempio</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> bgm = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sound</span>(<span class="hljs-string">'assets/background.mp3'</span>);
+<span class="hljs-keyword">const</span> esplosione = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sound</span>(<span class="hljs-string">'assets/boom.wav'</span>);
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">800</span>, <span class="hljs-number">600</span>);
+    bgm.<span class="hljs-title function_">setVolume</span>(<span class="hljs-number">0.3</span>);
+    bgm.<span class="hljs-title function_">loop</span>();
+}
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">keyPressed</span>(<span class="hljs-params">ev</span>) {
+    <span class="hljs-keyword">if</span> (ev.<span class="hljs-property">key</span> === <span class="hljs-string">' '</span>) esplosione.<span class="hljs-title function_">play</span>();
+}
+</code></pre>
+<blockquote>
+<p>⚠️ I browser moderni richiedono un'<strong>interazione utente</strong> prima di far partire l'audio. Avvia la musica in un handler (<code>click</code>, <code>keydown</code>, ecc.).</p>
+</blockquote>
+<hr>
+<h2 id="header-61">16. Sistema di Tag e Gruppi</h2>
+<p>Ogni <code>Sprite</code> può essere associato a un <strong>tag</strong> al momento della creazione. Tutti gli sprite con lo stesso tag vengono raccolti in un gruppo consultabile.</p>
+<h3 id="header-62"><code>getSpriteByName(name)</code></h3>
+<p>Ritorna lo sprite con quel nome (o <code>null</code>).</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> player = <span class="hljs-title function_">getSpriteByName</span>(<span class="hljs-string">'player'</span>);
+player.<span class="hljs-property">x</span> += <span class="hljs-number">10</span>;
+</code></pre>
+<blockquote>
+<p>⚠️ I nomi sono <strong>globali</strong>. Un nome duplicato genera un warning e sovrascrive il riferimento (ma non distrugge il vecchio sprite).</p>
+</blockquote>
+<h3 id="header-63"><code>getSpritesByTag(tag)</code></h3>
+<p>Ritorna l'array di sprite con quel tag (o <code>[]</code>).</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> nemici = <span class="hljs-title function_">getSpritesByTag</span>(<span class="hljs-string">'nemici'</span>);
+<span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> n <span class="hljs-keyword">of</span> nemici) {
+    <span class="hljs-keyword">if</span> (n.<span class="hljs-property">_toDelete</span>) <span class="hljs-keyword">continue</span>;
+    <span class="hljs-keyword">if</span> (player.<span class="hljs-title function_">collidesWith</span>(n)) { <span class="hljs-comment">/* ... */</span> }
+}
+</code></pre>
+<h3 id="header-64"><code>collidesWithGroup(sprite, tag)</code></h3>
+<p>Verifica se <code>sprite</code> collide con <strong>uno qualsiasi</strong> degli sprite del gruppo. Ritorna <strong>lo sprite</strong> che collide, o <code>null</code>.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> colpito = <span class="hljs-title function_">collidesWithGroup</span>(player, <span class="hljs-string">'nemici'</span>);
+<span class="hljs-keyword">if</span> (colpito) {
+    colpito.<span class="hljs-title function_">markForDeletion</span>();
+    punteggio += <span class="hljs-number">10</span>;
+}
+</code></pre>
+<p><strong>Esempio completo:</strong></p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">let</span> player;
+<span class="hljs-keyword">let</span> nemici = [];
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">800</span>, <span class="hljs-number">600</span>);
+    player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(<span class="hljs-string">'player.png'</span>, <span class="hljs-number">400</span>, <span class="hljs-number">500</span>, <span class="hljs-number">40</span>, <span class="hljs-number">40</span>, <span class="hljs-string">'player'</span>, <span class="hljs-string">'giocatori'</span>);
+
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">5</span>; i++) {
+        nemici.<span class="hljs-title function_">push</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(
+            <span class="hljs-string">'alien.png'</span>,
+            <span class="hljs-title function_">randomInt</span>(<span class="hljs-number">50</span>, <span class="hljs-number">750</span>), <span class="hljs-title function_">randomInt</span>(<span class="hljs-number">50</span>, <span class="hljs-number">200</span>),
+            <span class="hljs-number">40</span>, <span class="hljs-number">40</span>, <span class="hljs-literal">null</span>, <span class="hljs-string">'nemici'</span>
+        ));
+    }
+}
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">background</span>(<span class="hljs-number">10</span>);
+    player.<span class="hljs-title function_">draw</span>();
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> n <span class="hljs-keyword">of</span> nemici) n.<span class="hljs-title function_">draw</span>();
+
+    <span class="hljs-keyword">const</span> colpito = <span class="hljs-title function_">collidesWithGroup</span>(player, <span class="hljs-string">'nemici'</span>);
+    <span class="hljs-keyword">if</span> (colpito) {
+        colpito.<span class="hljs-title function_">markForDeletion</span>();
+    }
+    nemici = nemici.<span class="hljs-title function_">filter</span>(<span class="hljs-function"><span class="hljs-params">n</span> =&gt;</span> !n.<span class="hljs-property">_toDelete</span>);
+}
+</code></pre>
+<blockquote>
+<p>⚠️ <code>collidesWithGroup</code> è ottimizzato per un numero limitato di oggetti. Per centinaia/migliaia di sprite, implementa un <strong>broad-phase</strong> (es. spatial hashing).</p>
+</blockquote>
+<hr>
+<h2 id="header-65">17. Debug Mode e Frame Rate</h2>
+<h3 id="header-66"><code>debugMode(enabled = true)</code></h3>
+<p>Attiva/disattiva la modalità debug. Mostra:</p>
+<ul>
+<li><strong>FPS</strong> in alto a sinistra</li>
+<li><strong>Coordinate mouse</strong> in alto a sinistra</li>
+<li><strong>Bounding box</strong> colorati per tutti gli oggetti</li>
+</ul>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-title function_">debugMode</span>();        <span class="hljs-comment">// attiva</span>
+<span class="hljs-title function_">debugMode</span>(<span class="hljs-literal">false</span>);   <span class="hljs-comment">// disattiva</span>
+<span class="hljs-title function_">debugMode</span>(<span class="hljs-literal">true</span>);    <span class="hljs-comment">// attiva esplicitamente</span>
+</code></pre>
+<p>I colori dei box sono:</p>
+<table>
+<thead>
+<tr>
+<th>Oggetto</th>
+<th>Colore</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Sprite</code></td>
+<td>🔴 rosso</td>
+</tr>
+<tr>
+<td><code>eSprite</code></td>
+<td>🟣 viola</td>
+</tr>
+<tr>
+<td><code>Rect</code></td>
+<td>🟢 lime</td>
+</tr>
+<tr>
+<td><code>Ellipse</code></td>
+<td>🟢 lime</td>
+</tr>
+<tr>
+<td><code>Button</code></td>
+<td>🟢 lime</td>
+</tr>
+</tbody></table>
+<h3 id="header-67"><code>frameRate(fps)</code></h3>
+<p>Imposta il limite di FPS (default <code>60</code>). Accetta valori ≥ 1.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-title function_">frameRate</span>(<span class="hljs-number">30</span>);
+</code></pre>
+<h3 id="header-68"><code>getFrameRate()</code></h3>
+<p>Ritorna gli FPS medi correnti (calcolati in tempo reale).</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">if</span> (<span class="hljs-title function_">getFrameRate</span>() &lt; <span class="hljs-number">30</span>) {
+    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">warn</span>(<span class="hljs-string">'Lag!'</span>);
+}
+</code></pre>
+<blockquote>
+<p>💡 Internamente il loop usa <code>requestAnimationFrame</code> + limitazione software.</p>
+</blockquote>
+<hr>
+<h2 id="header-69">18. Esempi Completi</h2>
+<h3 id="header-70">🎮 Esempio 1: "Clicca il quadrato"</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">let</span> punteggio = <span class="hljs-number">0</span>;
+<span class="hljs-keyword">let</span> target;
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">800</span>, <span class="hljs-number">600</span>);
+    <span class="hljs-title function_">spawnTarget</span>();
+}
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">spawnTarget</span>(<span class="hljs-params"></span>) {
+    target = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(
+        <span class="hljs-title function_">randomInt</span>(<span class="hljs-number">50</span>, width - <span class="hljs-number">100</span>),
+        <span class="hljs-title function_">randomInt</span>(<span class="hljs-number">50</span>, height - <span class="hljs-number">100</span>),
+        <span class="hljs-number">80</span>, <span class="hljs-number">80</span>
+    );
+}
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">background</span>(<span class="hljs-number">240</span>);
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'orange'</span>);
+    target.<span class="hljs-title function_">draw</span>();
+
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'black'</span>);
+    <span class="hljs-title function_">textSize</span>(<span class="hljs-number">24</span>);
+    <span class="hljs-title function_">text</span>(<span class="hljs-string">'Punteggio: '</span> + punteggio, <span class="hljs-number">20</span>, <span class="hljs-number">30</span>);
+
+    <span class="hljs-keyword">if</span> (mousePressed &amp;&amp; target.<span class="hljs-title function_">isHovered</span>()) {
+        punteggio++;
+        <span class="hljs-title function_">spawnTarget</span>();
+    }
+}
+</code></pre>
+<hr>
+<h3 id="header-71">🚀 Esempio 2: Player con gravità e piattaforme</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">let</span> player, piattaforme = [], gravita = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vector</span>(<span class="hljs-number">0</span>, <span class="hljs-number">0.6</span>);
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">800</span>, <span class="hljs-number">600</span>);
+
+    player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(<span class="hljs-number">400</span>, <span class="hljs-number">100</span>, <span class="hljs-number">40</span>, <span class="hljs-number">40</span>);
+    player.<span class="hljs-title function_">addGravity</span>(gravita);
+
+    piattaforme.<span class="hljs-title function_">push</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(<span class="hljs-number">0</span>, <span class="hljs-number">550</span>, <span class="hljs-number">800</span>, <span class="hljs-number">50</span>));
+    piattaforme.<span class="hljs-title function_">push</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(<span class="hljs-number">200</span>, <span class="hljs-number">400</span>, <span class="hljs-number">150</span>, <span class="hljs-number">20</span>));
+    piattaforme.<span class="hljs-title function_">push</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(<span class="hljs-number">500</span>, <span class="hljs-number">300</span>, <span class="hljs-number">150</span>, <span class="hljs-number">20</span>));
+}
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">background</span>(<span class="hljs-string">'skyblue'</span>);
+
+    <span class="hljs-comment">// Fisica player</span>
+    player.<span class="hljs-property">vel</span>.<span class="hljs-title function_">add</span>(player.<span class="hljs-property">gravityVec</span>);
+    player.<span class="hljs-property">x</span> += player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span>;
+    player.<span class="hljs-property">y</span> += player.<span class="hljs-property">vel</span>.<span class="hljs-property">y</span>;
+
+    <span class="hljs-comment">// Input</span>
+    <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowleft'</span>)) player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span> = -<span class="hljs-number">5</span>;
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowright'</span>)) player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span> = <span class="hljs-number">5</span>;
+    <span class="hljs-keyword">else</span> player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span> = <span class="hljs-number">0</span>;
+
+    <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowup'</span>) &amp;&amp; player.<span class="hljs-property">y</span> &gt;= <span class="hljs-number">550</span> - player.<span class="hljs-property">h</span> - <span class="hljs-number">1</span>) {
+        player.<span class="hljs-property">vel</span>.<span class="hljs-property">y</span> = -<span class="hljs-number">12</span>;
+    }
+
+    <span class="hljs-comment">// Collisioni con piattaforme</span>
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> p <span class="hljs-keyword">of</span> piattaforme) {
+        <span class="hljs-keyword">if</span> (player.<span class="hljs-title function_">collidesWith</span>(p) &amp;&amp; player.<span class="hljs-property">vel</span>.<span class="hljs-property">y</span> &gt; <span class="hljs-number">0</span>) {
+            player.<span class="hljs-property">y</span> = p.<span class="hljs-property">y</span> - player.<span class="hljs-property">h</span>;
+            player.<span class="hljs-property">vel</span>.<span class="hljs-property">y</span> = <span class="hljs-number">0</span>;
+        }
+    }
+
+    <span class="hljs-comment">// Disegno</span>
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'brown'</span>);
+    piattaforme.<span class="hljs-title function_">forEach</span>(<span class="hljs-function"><span class="hljs-params">p</span> =&gt;</span> p.<span class="hljs-title function_">draw</span>());
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'red'</span>);
+    player.<span class="hljs-title function_">draw</span>();
+}
+</code></pre>
+<hr>
+<h3 id="header-72">💥 Esempio 3: Sparatutto con eSprite</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">let</span> player, proiettili = [], nemici = [], cooldown = <span class="hljs-number">0</span>;
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">800</span>, <span class="hljs-number">600</span>);
+    player = <span class="hljs-keyword">new</span> <span class="hljs-title function_">eSprite</span>(<span class="hljs-string">'🚀'</span>, <span class="hljs-number">380</span>, <span class="hljs-number">500</span>, <span class="hljs-number">40</span>);
+
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">8</span>; i++) {
+        nemici.<span class="hljs-title function_">push</span>(<span class="hljs-keyword">new</span> <span class="hljs-title function_">eSprite</span>(<span class="hljs-string">'👾'</span>, <span class="hljs-number">50</span> + i * <span class="hljs-number">90</span>, <span class="hljs-number">60</span>, <span class="hljs-number">32</span>));
+    }
+}
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">background</span>(<span class="hljs-number">10</span>, <span class="hljs-number">10</span>, <span class="hljs-number">40</span>);
+
+    <span class="hljs-comment">// Movimento player</span>
+    <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowleft'</span>)) player.<span class="hljs-property">x</span> -= <span class="hljs-number">6</span>;
+    <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowright'</span>)) player.<span class="hljs-property">x</span> += <span class="hljs-number">6</span>;
+
+    <span class="hljs-comment">// Sparo</span>
+    <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">' '</span>) &amp;&amp; cooldown &lt;= <span class="hljs-number">0</span>) {
+        <span class="hljs-keyword">const</span> p = <span class="hljs-keyword">new</span> <span class="hljs-title function_">eSprite</span>(<span class="hljs-string">'💥'</span>, player.<span class="hljs-property">x</span> + <span class="hljs-number">12</span>, player.<span class="hljs-property">y</span> - <span class="hljs-number">20</span>, <span class="hljs-number">20</span>);
+        p.<span class="hljs-property">vel</span>.<span class="hljs-property">y</span> = -<span class="hljs-number">10</span>;
+        proiettili.<span class="hljs-title function_">push</span>(p);
+        cooldown = <span class="hljs-number">15</span>;
+    }
+    <span class="hljs-keyword">if</span> (cooldown &gt; <span class="hljs-number">0</span>) cooldown--;
+
+    <span class="hljs-comment">// Aggiorna proiettili</span>
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> b <span class="hljs-keyword">of</span> proiettili) {
+        b.<span class="hljs-property">y</span> += b.<span class="hljs-property">vel</span>.<span class="hljs-property">y</span>;
+        <span class="hljs-keyword">if</span> (b.<span class="hljs-property">y</span> &lt; -<span class="hljs-number">20</span>) b.<span class="hljs-title function_">markForDeletion</span>();
+    }
+    proiettili = proiettili.<span class="hljs-title function_">filter</span>(<span class="hljs-function"><span class="hljs-params">b</span> =&gt;</span> !b.<span class="hljs-property">_toDelete</span>);
+
+    <span class="hljs-comment">// Collisioni</span>
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> b <span class="hljs-keyword">of</span> proiettili) {
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> n <span class="hljs-keyword">of</span> nemici) {
+            <span class="hljs-keyword">if</span> (!n.<span class="hljs-property">_toDelete</span> &amp;&amp; b.<span class="hljs-title function_">collidesWith</span>(n)) {
+                b.<span class="hljs-title function_">markForDeletion</span>();
+                n.<span class="hljs-title function_">markForDeletion</span>();
+            }
+        }
+    }
+    proiettili = proiettili.<span class="hljs-title function_">filter</span>(<span class="hljs-function"><span class="hljs-params">b</span> =&gt;</span> !b.<span class="hljs-property">_toDelete</span>);
+    nemici = nemici.<span class="hljs-title function_">filter</span>(<span class="hljs-function"><span class="hljs-params">n</span> =&gt;</span> !n.<span class="hljs-property">_toDelete</span>);
+
+    <span class="hljs-comment">// Disegno</span>
+    player.<span class="hljs-title function_">draw</span>();
+    proiettili.<span class="hljs-title function_">forEach</span>(<span class="hljs-function"><span class="hljs-params">b</span> =&gt;</span> b.<span class="hljs-title function_">draw</span>());
+    nemici.<span class="hljs-title function_">forEach</span>(<span class="hljs-function"><span class="hljs-params">n</span> =&gt;</span> n.<span class="hljs-title function_">draw</span>());
+
+    <span class="hljs-comment">// HUD</span>
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'white'</span>);
+    <span class="hljs-title function_">textSize</span>(<span class="hljs-number">20</span>);
+    <span class="hljs-title function_">text</span>(<span class="hljs-string">'Nemici: '</span> + nemici.<span class="hljs-property">length</span>, <span class="hljs-number">20</span>, <span class="hljs-number">30</span>);
+}
+</code></pre>
+<hr>
+<h3 id="header-73">🏷️ Esempio 4: Uso completo di tag e nome</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">let</span> player;
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">800</span>, <span class="hljs-number">600</span>);
+
+    player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(<span class="hljs-string">'hero.png'</span>, <span class="hljs-number">400</span>, <span class="hljs-number">500</span>, <span class="hljs-number">50</span>, <span class="hljs-number">50</span>, <span class="hljs-string">'hero'</span>, <span class="hljs-string">'giocatori'</span>);
+
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i++) {
+        <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(<span class="hljs-string">'coin.png'</span>,
+            <span class="hljs-title function_">randomInt</span>(<span class="hljs-number">20</span>, <span class="hljs-number">750</span>),
+            <span class="hljs-title function_">randomInt</span>(<span class="hljs-number">50</span>, <span class="hljs-number">550</span>),
+            <span class="hljs-number">24</span>, <span class="hljs-number">24</span>, <span class="hljs-literal">null</span>, <span class="hljs-string">'monete'</span>);
+    }
+}
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">background</span>(<span class="hljs-number">20</span>);
+
+    <span class="hljs-comment">// Ottieni il player tramite nome (utile con editor/UI)</span>
+    <span class="hljs-keyword">const</span> hero = <span class="hljs-title function_">getSpriteByName</span>(<span class="hljs-string">'hero'</span>);
+    <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowleft'</span>)) hero.<span class="hljs-property">x</span> -= <span class="hljs-number">4</span>;
+    <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowright'</span>)) hero.<span class="hljs-property">x</span> += <span class="hljs-number">4</span>;
+
+    hero.<span class="hljs-title function_">draw</span>();
+
+    <span class="hljs-comment">// Collisioni con gruppo "monete"</span>
+    <span class="hljs-keyword">const</span> moneta = <span class="hljs-title function_">collidesWithGroup</span>(hero, <span class="hljs-string">'monete'</span>);
+    <span class="hljs-keyword">if</span> (moneta) {
+        moneta.<span class="hljs-title function_">markForDeletion</span>();
+        hero.<span class="hljs-title function_">setCount</span>(hero.<span class="hljs-title function_">getCount</span>() + <span class="hljs-number">1</span>);
+    }
+
+    <span class="hljs-comment">// Disegna tutte le monete rimaste</span>
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> c <span class="hljs-keyword">of</span> <span class="hljs-title function_">getSpritesByTag</span>(<span class="hljs-string">'monete'</span>)) {
+        <span class="hljs-keyword">if</span> (!c.<span class="hljs-property">_toDelete</span>) c.<span class="hljs-title function_">draw</span>();
+    }
+}
+</code></pre>
+<hr>
+<h2 id="header-74">19. Best Practice e Note</h2>
+<h3 id="header-75">✅ Da fare</h3>
+<ul>
+<li><strong>Chiama <code>draw()</code> su ogni oggetto</strong> dentro il tuo <code>draw()</code> principale, dopo aver aggiornato la fisica.</li>
+<li>Usa <strong><code>markForDeletion()</code></strong> + filtro dell'array per rimuovere oggetti, invece di <code>delete</code>.</li>
+<li>Per <strong>molti oggetti</strong> (centinaia), evita <code>collidesWithGroup</code> con collisioni pixel-perfect: usa prima AABB.</li>
+<li>Usa <code>name</code> per pochi oggetti "speciali" (player, UI), <code>tag</code> per gruppi numerosi.</li>
+<li>Se usi immagini remote, imposta <code>crossOrigin</code> (già fatto per te) e servi da server HTTP (non <code>file://</code>).</li>
+</ul>
+<h3 id="header-76">⚠️ Attenzioni</h3>
+<table>
+<thead>
+<tr>
+<th>Situazione</th>
+<th>Nota</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Immagini base64</td>
+<td>Non aspettano il caricamento (immediate).</td>
+</tr>
+<tr>
+<td><code>eSprite.w</code></td>
+<td>È <code>0</code> finché non viene chiamato <code>draw()</code> la prima volta.</td>
+</tr>
+<tr>
+<td>Drag &amp; Drop</td>
+<td>Solo <strong>un oggetto</strong> alla volta globalmente.</td>
+</tr>
+<tr>
+<td><code>Ellipse</code></td>
+<td><code>x, y</code> è il <strong>centro</strong>, non l'angolo.</td>
+</tr>
+<tr>
+<td>Rotazione</td>
+<td>Il bounding box AABB <strong>non ruota</strong> con l'oggetto.</td>
+</tr>
+<tr>
+<td><code>setTag</code></td>
+<td>Non pulisce il vecchio gruppo.</td>
+</tr>
+<tr>
+<td><code>background(image)</code></td>
+<td>L'immagine viene stirata al canvas.</td>
+</tr>
+<tr>
+<td><code>keyPressed</code> / <code>keyReleased</code></td>
+<td>L'evento passato è quello nativo del browser.</td>
+</tr>
+</tbody></table>
+<h3 id="header-77">🔧 Personalizzazioni consigliate</h3>
+<ul>
+<li><strong>Effetti particellari</strong>: usa <code>eSprite</code> con <code>markForDeletion</code> e <code>vel</code>.</li>
+<li><strong>Menu</strong>: combina <code>Button</code> + <code>frameCount</code> per fade-in.</li>
+<li><strong>Tilemap</strong>: array di <code>Rect</code> con collisioni AABB.</li>
+<li><strong>Debug UI</strong>: attiva <code>debugMode()</code> con un tasto (es. <code>'d'</code>).</li>
+</ul>
+<hr>
+<h2 id="header-78">📌 Riepilogo API — Cheat Sheet</h2>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-comment">// === SETUP ===</span>
+<span class="hljs-title function_">createMiniCanvas</span>(w, h)
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {}
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {}
+
+<span class="hljs-comment">// === SFONDO &amp; STILE ===</span>
+<span class="hljs-title function_">background</span>(color|r,g,b|imagePath)
+<span class="hljs-title function_">clear</span>()
+<span class="hljs-title function_">fill</span>(color|r,g,b)
+<span class="hljs-title function_">stroke</span>(color|r,g,b)
+<span class="hljs-title function_">noStroke</span>()
+<span class="hljs-title function_">strokeWeight</span>(n)
+
+<span class="hljs-comment">// === TESTO ===</span>
+<span class="hljs-title function_">text</span>(str, x, y)
+<span class="hljs-title function_">textSize</span>(px)
+<span class="hljs-title function_">textAlign</span>(<span class="hljs-string">'left'</span>|<span class="hljs-string">'center'</span>|<span class="hljs-string">'right'</span>)
+<span class="hljs-title function_">textBaseline</span>(<span class="hljs-string">'top'</span>|<span class="hljs-string">'middle'</span>|<span class="hljs-string">'bottom'</span>|<span class="hljs-string">'alphabetic'</span>)
+<span class="hljs-title function_">textWidth</span>(str)
+
+<span class="hljs-comment">// === INPUT ===</span>
+mouseX, mouseY, mousePressed
+<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'a'</span> | <span class="hljs-string">'arrowleft'</span> | <span class="hljs-number">65</span>)
+<span class="hljs-title function_">keyWasReleased</span>(<span class="hljs-string">'enter'</span>)
+
+<span class="hljs-comment">// === MATH ===</span>
+<span class="hljs-title function_">map</span>(v, s1, e1, s2, e2)
+<span class="hljs-title function_">constrain</span>(v, min, max)
+<span class="hljs-title function_">randomInt</span>(min, max)
+<span class="hljs-title function_">dist</span>(objA, objB)
+<span class="hljs-title function_">shuffle</span>(arr)
+<span class="hljs-title function_">extractRandom</span>(arr)
+
+<span class="hljs-comment">// === OGGETTI ===</span>
+<span class="hljs-keyword">new</span> <span class="hljs-title class_">Vector</span>(x, y)
+<span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(path, x, y, w, h, name?, tag?)
+<span class="hljs-keyword">new</span> <span class="hljs-title function_">eSprite</span>(emoji, x, y, size)
+<span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(x, y, w, h)
+<span class="hljs-keyword">new</span> <span class="hljs-title class_">Ellipse</span>(cx, cy, w, h)
+<span class="hljs-keyword">new</span> <span class="hljs-title class_">Button</span>(x, y, w, h, label)
+<span class="hljs-keyword">new</span> <span class="hljs-title class_">Sound</span>(path)
+
+<span class="hljs-comment">// === METODI OGGETTI ===</span>
+obj.<span class="hljs-title function_">draw</span>()
+obj.<span class="hljs-title function_">collidesWith</span>(other)
+obj.<span class="hljs-title function_">isHovered</span>()
+obj.<span class="hljs-title function_">isDragged</span>()
+obj.<span class="hljs-title function_">addGravity</span>(vector)
+obj.<span class="hljs-title function_">markForDeletion</span>()
+obj.<span class="hljs-title function_">flip</span>(bool) / obj.<span class="hljs-title function_">flipV</span>(bool)
+obj.<span class="hljs-title function_">rotate</span>(degrees)
+sprite.<span class="hljs-title function_">animate</span>(fw, fh, n, fps)
+sprite.<span class="hljs-title function_">changeImage</span>(path)
+esprite.<span class="hljs-title function_">changeEmoji</span>(str)
+
+<span class="hljs-comment">// === GRUPPI ===</span>
+<span class="hljs-title function_">getSpriteByName</span>(<span class="hljs-string">'player'</span>)
+<span class="hljs-title function_">getSpritesByTag</span>(<span class="hljs-string">'nemici'</span>)
+<span class="hljs-title function_">collidesWithGroup</span>(sprite, <span class="hljs-string">'nemici'</span>)
+
+<span class="hljs-comment">// === DEBUG ===</span>
+<span class="hljs-title function_">debugMode</span>(<span class="hljs-literal">true</span>|<span class="hljs-literal">false</span>)
+<span class="hljs-title function_">frameRate</span>(fps)
+<span class="hljs-title function_">getFrameRate</span>()
+
+<span class="hljs-comment">// === HOOK ===</span>
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">keyPressed</span>(<span class="hljs-params">ev</span>) {}
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">keyReleased</span>(<span class="hljs-params">ev</span>) {}
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">mouseClicked</span>(<span class="hljs-params">ev</span>) {}
+</code></pre>
+<hr>
+<h1 id="header-79">🔧 Bundler GUI per gamma-2d</h1>
+<p>Ecco la versione del bundler, con le seguenti caratteristiche e migliorie:</p>
+<h3 id="header-80">🆕 Modifiche principali</h3>
+<table>
+<thead>
+<tr>
+<th>Modifica</th>
+<th>Dettaglio</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Auto-detect libreria</strong></td>
+<td>Cerca <code>gamma-2d.min.js</code>, se non esiste usa <code>gamma-2d.js</code> (come nel tuo caso)</td>
+</tr>
+<tr>
+<td><strong>Ordine HTML corretto</strong></td>
+<td>Libreria <strong>prima</strong> del codice gioco (così <code>Sprite</code>, <code>Rect</code>, ecc. sono disponibili anche a livello top)</td>
+</tr>
+<tr>
+<td><strong>Helper <code>getAsset()</code></strong></td>
+<td>Funzione inclusa nell'HTML generato per accedere agli asset in modo trasparente</td>
+</tr>
+<tr>
+<td><strong>Estensioni ampliate</strong></td>
+<td>Aggiunti <code>.gif</code>, <code>.webp</code>, <code>.bmp</code>, <code>.ogg</code>, <code>.m4a</code>, <code>.aac</code></td>
+</tr>
+<tr>
+<td><strong>Status migliorato</strong></td>
+<td>Mostra conteggio asset, dimensione output e percorso finale</td>
+</tr>
+<tr>
+<td><strong>Validazioni più chiare</strong></td>
+<td>Messaggi d'errore espliciti se la libreria non viene trovata</td>
+</tr>
+<tr>
+<td><strong>UI più informativa</strong></td>
+<td>Conteggio asset in tempo reale, indicatore presenza libreria, bottone disabilitato durante build</td>
+</tr>
+</tbody></table>
+<h3 id="header-81">📄 <code>bundler_gui.py</code></h3>
+<pre><code class="language-python hljs" data-highlighted="yes"><span class="hljs-keyword">import</span> tkinter <span class="hljs-keyword">as</span> tk
+<span class="hljs-keyword">from</span> tkinter <span class="hljs-keyword">import</span> filedialog, messagebox, ttk
+<span class="hljs-keyword">import</span> os
+<span class="hljs-keyword">import</span> base64
+<span class="hljs-keyword">import</span> mimetypes
+<span class="hljs-keyword">import</span> pathlib
+<span class="hljs-keyword">import</span> sys
+
+
+<span class="hljs-comment"># --- FUNZIONE PER GESTIRE I PERCORSI IN PYTHON E PYINSTALLER ---</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">get_base_dir</span>():
+    <span class="hljs-string">"""Restituisce la directory base dell'applicazione (script o eseguibile)."""</span>
+    <span class="hljs-keyword">if</span> <span class="hljs-built_in">getattr</span>(sys, <span class="hljs-string">'frozen'</span>, <span class="hljs-literal">False</span>):
+        <span class="hljs-keyword">return</span> pathlib.Path(sys.executable).parent
+    <span class="hljs-keyword">return</span> pathlib.Path(__file__).parent
+
+
+<span class="hljs-comment"># --- CONFIGURAZIONE ---</span>
+CURRENT_DIR = get_base_dir()
+
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">find_minilib</span>():
+    <span class="hljs-string">"""Cerca la libreria gamma-2d, preferendo la versione minificata."""</span>
+    candidates = [<span class="hljs-string">'gamma-2d.min.js'</span>, <span class="hljs-string">'gamma-2d.js'</span>]
+    <span class="hljs-keyword">for</span> name <span class="hljs-keyword">in</span> candidates:
+        path = CURRENT_DIR / name
+        <span class="hljs-keyword">if</span> path.exists():
+            <span class="hljs-keyword">return</span> path
+    <span class="hljs-comment"># Fallback per il messaggio d'errore</span>
+    <span class="hljs-keyword">return</span> CURRENT_DIR / <span class="hljs-string">'gamma-2d.js'</span>
+
+
+MINILIB_FILE = find_minilib()
+ASSETS_DIR = CURRENT_DIR / <span class="hljs-string">'assets'</span>
+
+<span class="hljs-comment"># Estensioni supportate (allineate con la libreria gamma-2d)</span>
+IMAGE_EXTS = (<span class="hljs-string">'.png'</span>, <span class="hljs-string">'.jpg'</span>, <span class="hljs-string">'.jpeg'</span>, <span class="hljs-string">'.gif'</span>, <span class="hljs-string">'.webp'</span>, <span class="hljs-string">'.bmp'</span>, <span class="hljs-string">'.svg'</span>)
+AUDIO_EXTS = (<span class="hljs-string">'.mp3'</span>, <span class="hljs-string">'.wav'</span>, <span class="hljs-string">'.ogg'</span>, <span class="hljs-string">'.m4a'</span>, <span class="hljs-string">'.aac'</span>)
+ALL_EXTS = IMAGE_EXTS + AUDIO_EXTS
+
+
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">BundlerApp</span>:
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, master</span>):
+        self.master = master
+        master.title(<span class="hljs-string">"gamma-2d Bundler GUI"</span>)
+        master.resizable(<span class="hljs-literal">False</span>, <span class="hljs-literal">False</span>)
+
+        self.game_file_path = <span class="hljs-string">""</span>
+        self.minilib_path = MINILIB_FILE
+        self.assets_dir = ASSETS_DIR
+
+        <span class="hljs-comment"># --- Stili ---</span>
+        style = ttk.Style()
+        style.configure(<span class="hljs-string">'TFrame'</span>, padding=<span class="hljs-number">10</span>)
+        style.configure(<span class="hljs-string">'TLabel'</span>, padding=<span class="hljs-number">5</span>)
+        style.configure(<span class="hljs-string">'TButton'</span>, padding=<span class="hljs-number">10</span>)
+        style.configure(<span class="hljs-string">'Header.TLabel'</span>, font=(<span class="hljs-string">'Helvetica'</span>, <span class="hljs-number">14</span>, <span class="hljs-string">'bold'</span>))
+
+        main_frame = ttk.Frame(master, padding=<span class="hljs-string">"15 15 15 15"</span>)
+        main_frame.pack()
+
+        <span class="hljs-comment"># --- Titolo ---</span>
+        ttk.Label(
+            main_frame,
+            text=<span class="hljs-string">"gamma-2d Standalone Creator"</span>,
+            style=<span class="hljs-string">'Header.TLabel'</span>
+        ).grid(row=<span class="hljs-number">0</span>, column=<span class="hljs-number">0</span>, columnspan=<span class="hljs-number">3</span>, pady=<span class="hljs-number">10</span>)
+
+        <span class="hljs-comment"># --- 1. File JS del gioco ---</span>
+        ttk.Label(main_frame, text=<span class="hljs-string">"File JavaScript del Gioco (.js):"</span>).grid(row=<span class="hljs-number">1</span>, column=<span class="hljs-number">0</span>, sticky=<span class="hljs-string">"w"</span>)
+        self.game_path_entry = ttk.Entry(main_frame, width=<span class="hljs-number">40</span>)
+        self.game_path_entry.grid(row=<span class="hljs-number">1</span>, column=<span class="hljs-number">1</span>, padx=<span class="hljs-number">5</span>, pady=<span class="hljs-number">5</span>)
+        ttk.Button(main_frame, text=<span class="hljs-string">"Sfoglia"</span>, command=self.select_game_file).grid(row=<span class="hljs-number">1</span>, column=<span class="hljs-number">2</span>)
+
+        <span class="hljs-comment"># --- 2. Nome output HTML ---</span>
+        ttk.Label(main_frame, text=<span class="hljs-string">"Nome File Standalone (.html):"</span>).grid(row=<span class="hljs-number">2</span>, column=<span class="hljs-number">0</span>, sticky=<span class="hljs-string">"w"</span>)
+        self.output_name_entry = ttk.Entry(main_frame, width=<span class="hljs-number">40</span>)
+        self.output_name_entry.insert(<span class="hljs-number">0</span>, <span class="hljs-string">"gioco_standalone.html"</span>)
+        self.output_name_entry.grid(row=<span class="hljs-number">2</span>, column=<span class="hljs-number">1</span>, padx=<span class="hljs-number">5</span>, pady=<span class="hljs-number">5</span>)
+
+        <span class="hljs-comment"># --- 3. Libreria (display con indicatore) ---</span>
+        ttk.Label(main_frame, text=<span class="hljs-string">"Libreria gamma-2d:"</span>).grid(row=<span class="hljs-number">3</span>, column=<span class="hljs-number">0</span>, sticky=<span class="hljs-string">"w"</span>)
+        lib_status = <span class="hljs-string">"✅"</span> <span class="hljs-keyword">if</span> self.minilib_path.exists() <span class="hljs-keyword">else</span> <span class="hljs-string">"❌ (non trovata)"</span>
+        ttk.Label(
+            main_frame,
+            text=<span class="hljs-string">f"<span class="hljs-subst">{lib_status}</span>  <span class="hljs-subst">{self.minilib_path.name}</span>"</span>
+        ).grid(row=<span class="hljs-number">3</span>, column=<span class="hljs-number">1</span>, sticky=<span class="hljs-string">"w"</span>)
+        ttk.Label(
+            main_frame,
+            text=<span class="hljs-string">f"in: <span class="hljs-subst">{self.minilib_path.parent.name}</span>/"</span>,
+            foreground=<span class="hljs-string">"gray"</span>
+        ).grid(row=<span class="hljs-number">3</span>, column=<span class="hljs-number">2</span>, sticky=<span class="hljs-string">"w"</span>)
+
+        <span class="hljs-comment"># --- 4. Assets (display con conteggio) ---</span>
+        ttk.Label(main_frame, text=<span class="hljs-string">"Cartella Assets:"</span>).grid(row=<span class="hljs-number">4</span>, column=<span class="hljs-number">0</span>, sticky=<span class="hljs-string">"w"</span>)
+        ttk.Label(
+            main_frame,
+            text=<span class="hljs-string">f"📁 <span class="hljs-subst">{self.assets_dir.name}</span>/"</span>
+        ).grid(row=<span class="hljs-number">4</span>, column=<span class="hljs-number">1</span>, sticky=<span class="hljs-string">"w"</span>)
+        self.assets_count_label = ttk.Label(main_frame, text=self._get_assets_summary())
+        self.assets_count_label.grid(row=<span class="hljs-number">4</span>, column=<span class="hljs-number">2</span>, sticky=<span class="hljs-string">"w"</span>)
+
+        <span class="hljs-comment"># --- 5. Bottone principale ---</span>
+        self.bundle_button = ttk.Button(
+            main_frame,
+            text=<span class="hljs-string">"🚀 Crea File Standalone"</span>,
+            command=self.run_bundling
+        )
+        self.bundle_button.grid(row=<span class="hljs-number">5</span>, column=<span class="hljs-number">0</span>, columnspan=<span class="hljs-number">3</span>, pady=<span class="hljs-number">20</span>)
+
+        <span class="hljs-comment"># --- 6. Status ---</span>
+        self.status_label = ttk.Label(main_frame, text=<span class="hljs-string">""</span>, foreground=<span class="hljs-string">"blue"</span>)
+        self.status_label.grid(row=<span class="hljs-number">6</span>, column=<span class="hljs-number">0</span>, columnspan=<span class="hljs-number">3</span>, pady=<span class="hljs-number">5</span>)
+
+    <span class="hljs-comment"># ------------------------------------------------------------</span>
+    <span class="hljs-comment"># HELPERS UI</span>
+    <span class="hljs-comment"># ------------------------------------------------------------</span>
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">_get_assets_summary</span>(<span class="hljs-params">self</span>):
+        <span class="hljs-string">"""Ritorna una stringa con il conteggio degli asset trovati."""</span>
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> self.assets_dir.exists():
+            <span class="hljs-keyword">return</span> <span class="hljs-string">"(cartella non trovata)"</span>
+        count = <span class="hljs-built_in">sum</span>(
+            <span class="hljs-number">1</span> <span class="hljs-keyword">for</span> f <span class="hljs-keyword">in</span> self.assets_dir.iterdir()
+            <span class="hljs-keyword">if</span> f.is_file() <span class="hljs-keyword">and</span> f.suffix.lower() <span class="hljs-keyword">in</span> ALL_EXTS
+        )
+        <span class="hljs-keyword">return</span> <span class="hljs-string">f"(<span class="hljs-subst">{count}</span> file trovati)"</span> <span class="hljs-keyword">if</span> count &gt; <span class="hljs-number">0</span> <span class="hljs-keyword">else</span> <span class="hljs-string">"(vuota)"</span>
+
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">select_game_file</span>(<span class="hljs-params">self</span>):
+        <span class="hljs-string">"""Dialog per selezionare il file JS del gioco."""</span>
+        filetypes = (
+            (<span class="hljs-string">'JavaScript files'</span>, <span class="hljs-string">'*.js'</span>),
+            (<span class="hljs-string">'All files'</span>, <span class="hljs-string">'*.*'</span>)
+        )
+        self.game_file_path = filedialog.askopenfilename(
+            initialdir=CURRENT_DIR,
+            title=<span class="hljs-string">"Seleziona il codice del gioco"</span>,
+            filetypes=filetypes
+        )
+        <span class="hljs-keyword">if</span> self.game_file_path:
+            self.game_path_entry.delete(<span class="hljs-number">0</span>, tk.END)
+            self.game_path_entry.insert(<span class="hljs-number">0</span>, self.game_file_path)
+
+    <span class="hljs-comment"># ------------------------------------------------------------</span>
+    <span class="hljs-comment"># CONVERSIONE ASSET IN BASE64</span>
+    <span class="hljs-comment"># ------------------------------------------------------------</span>
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">file_to_base64</span>(<span class="hljs-params">self, file_path</span>):
+        <span class="hljs-string">"""Converte un file in stringa Base64 con MIME type corretto."""</span>
+        mime_type, _ = mimetypes.guess_type(<span class="hljs-built_in">str</span>(file_path))
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> mime_type:
+            ext = pathlib.Path(file_path).suffix.lower()
+            fallbacks = {
+                <span class="hljs-string">'.mp3'</span>: <span class="hljs-string">'audio/mpeg'</span>,
+                <span class="hljs-string">'.wav'</span>: <span class="hljs-string">'audio/wav'</span>,
+                <span class="hljs-string">'.ogg'</span>: <span class="hljs-string">'audio/ogg'</span>,
+                <span class="hljs-string">'.m4a'</span>: <span class="hljs-string">'audio/mp4'</span>,
+                <span class="hljs-string">'.aac'</span>: <span class="hljs-string">'audio/aac'</span>,
+                <span class="hljs-string">'.svg'</span>: <span class="hljs-string">'image/svg+xml'</span>,
+                <span class="hljs-string">'.webp'</span>: <span class="hljs-string">'image/webp'</span>,
+            }
+            mime_type = fallbacks.get(ext, <span class="hljs-string">'application/octet-stream'</span>)
+
+        <span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(file_path, <span class="hljs-string">'rb'</span>) <span class="hljs-keyword">as</span> f:
+            data = base64.b64encode(f.read()).decode(<span class="hljs-string">'utf-8'</span>)
+
+        <span class="hljs-keyword">return</span> <span class="hljs-string">f'data:<span class="hljs-subst">{mime_type}</span>;base64,<span class="hljs-subst">{data}</span>'</span>
+
+    <span class="hljs-comment"># ------------------------------------------------------------</span>
+    <span class="hljs-comment"># BUNDLING</span>
+    <span class="hljs-comment"># ------------------------------------------------------------</span>
+    <span class="hljs-keyword">def</span> <span class="hljs-title function_">run_bundling</span>(<span class="hljs-params">self</span>):
+        <span class="hljs-string">"""Esegue il bundling al click del bottone."""</span>
+        game_file_path = self.game_path_entry.get().strip()
+        output_file_name = self.output_name_entry.get().strip()
+
+        <span class="hljs-comment"># --- Validazione ---</span>
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> game_file_path <span class="hljs-keyword">or</span> <span class="hljs-keyword">not</span> os.path.exists(game_file_path):
+            messagebox.showerror(<span class="hljs-string">"Errore"</span>, <span class="hljs-string">"Seleziona un file JavaScript valido."</span>)
+            <span class="hljs-keyword">return</span>
+
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> output_file_name:
+            messagebox.showerror(<span class="hljs-string">"Errore"</span>, <span class="hljs-string">"Inserisci un nome per il file di output."</span>)
+            <span class="hljs-keyword">return</span>
+
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> output_file_name.lower().endswith(<span class="hljs-string">'.html'</span>):
+            messagebox.showerror(<span class="hljs-string">"Errore"</span>, <span class="hljs-string">"Il nome del file di output deve terminare con .html"</span>)
+            <span class="hljs-keyword">return</span>
+
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> self.minilib_path.exists():
+            messagebox.showerror(
+                <span class="hljs-string">"Errore"</span>,
+                <span class="hljs-string">f"Libreria gamma-2d non trovata!\n\n"</span>
+                <span class="hljs-string">f"Cartella cercata:\n<span class="hljs-subst">{self.minilib_path.parent}</span>\n\n"</span>
+                <span class="hljs-string">f"Nomi accettati:\n"</span>
+                <span class="hljs-string">f"  • gamma-2d.js\n"</span>
+                <span class="hljs-string">f"  • gamma-2d.min.js\n\n"</span>
+                <span class="hljs-string">f"Assicurati che uno dei due file sia presente nella stessa cartella del bundler."</span>
+            )
+            <span class="hljs-keyword">return</span>
+
+        self.status_label.config(text=<span class="hljs-string">"⏳ Creazione in corso..."</span>, foreground=<span class="hljs-string">"orange"</span>)
+        self.bundle_button.config(state=<span class="hljs-string">'disabled'</span>)
+        self.master.update()
+
+        <span class="hljs-keyword">try</span>:
+            <span class="hljs-comment"># --- 1. Carica libreria e codice gioco ---</span>
+            minilib_code = self.minilib_path.read_text(encoding=<span class="hljs-string">'utf-8'</span>)
+            game_code = pathlib.Path(game_file_path).read_text(encoding=<span class="hljs-string">'utf-8'</span>)
+
+            <span class="hljs-comment"># --- 2. Processa assets ---</span>
+            base64_definitions = <span class="hljs-string">'const ASSETS = {};\n'</span>
+            asset_count = <span class="hljs-number">0</span>
+
+            <span class="hljs-keyword">if</span> self.assets_dir.exists():
+                asset_files = <span class="hljs-built_in">sorted</span>(
+                    [f <span class="hljs-keyword">for</span> f <span class="hljs-keyword">in</span> self.assets_dir.iterdir()
+                     <span class="hljs-keyword">if</span> f.is_file() <span class="hljs-keyword">and</span> f.suffix.lower() <span class="hljs-keyword">in</span> ALL_EXTS],
+                    key=<span class="hljs-keyword">lambda</span> f: f.name.lower()
+                )
+
+                <span class="hljs-keyword">for</span> asset_path <span class="hljs-keyword">in</span> asset_files:
+                    base64_string = self.file_to_base64(asset_path)
+                    <span class="hljs-comment"># Chiave = nome file (es. 'player.png')</span>
+                    base64_definitions += <span class="hljs-string">f"ASSETS['<span class="hljs-subst">{asset_path.name}</span>'] = '<span class="hljs-subst">{base64_string}</span>';\n"</span>
+                    asset_count += <span class="hljs-number">1</span>
+
+            <span class="hljs-comment"># --- 3. Template HTML ---</span>
+            <span class="hljs-comment"># Ordine: ASSETS → LIBRERIA → CODICE GIOCO</span>
+            <span class="hljs-comment"># (così Sprite/Sound/eSprite sono definiti anche a livello top del game code)</span>
+            html_template = <span class="hljs-string">f"""&lt;!DOCTYPE html&gt;
+&lt;html lang="it"&gt;
+&lt;head&gt;
+    &lt;meta charset="utf-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+    &lt;title&gt;<span class="hljs-subst">{output_file_name[:-<span class="hljs-number">5</span>]}</span>&lt;/title&gt;
+    &lt;style&gt;
+        body {{
+            margin: 0;
+            background: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: sans-serif;
+        }}
+        canvas {{
+            box-shadow: 0 0 24px rgba(0,0,0,0.6);
+            border-radius: 4px;
+        }}
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;script&gt;
+// ============================================================
+// 1) ASSETS EMBEDDED (Base64)
+// ============================================================
+// Ogni file è disponibile come ASSETS['nomefile.ext']
+//
+// Esempi d'uso nel codice del gioco:
+//   new Sprite(ASSETS['player.png'], 100, 100, 32, 32)
+//   new Sound(ASSETS['boom.wav'])
+//   background(ASSETS['sfondo.png'])
+//
+// Oppure usa l'helper getAsset() che tollera path tipo 'assets/player.png':
+//   new Sprite(getAsset('assets/player.png'), 100, 100, 32, 32)
+<span class="hljs-subst">{base64_definitions}</span>
+
+function getAsset(path) {{
+    if (!path || typeof path !== 'string') return path;
+    if (path.startsWith('data:')) return path;
+    const name = path.split('/').pop();
+    return ASSETS[name] || path;
+}}
+
+// ============================================================
+// 2) GAMMA-2D LIBRARY
+// ============================================================
+<span class="hljs-subst">{minilib_code}</span>
+
+// ============================================================
+// 3) CODICE DEL GIOCO
+// ============================================================
+<span class="hljs-subst">{game_code}</span>
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+"""</span>
+
+            <span class="hljs-comment"># --- 4. Scrivi file ---</span>
+            output_path = CURRENT_DIR / output_file_name
+            output_path.write_text(html_template.strip(), encoding=<span class="hljs-string">'utf-8'</span>)
+
+            size_kb = output_path.stat().st_size / <span class="hljs-number">1024</span>
+            self.assets_count_label.config(text=self._get_assets_summary())
+
+            self.status_label.config(
+                text=<span class="hljs-string">f"✅ Creato: <span class="hljs-subst">{output_file_name}</span>  •  <span class="hljs-subst">{asset_count}</span> asset  •  <span class="hljs-subst">{size_kb:<span class="hljs-number">.1</span>f}</span> KB"</span>,
+                foreground=<span class="hljs-string">"green"</span>
+            )
+
+            messagebox.showinfo(
+                <span class="hljs-string">"Successo!"</span>,
+                <span class="hljs-string">f"File standalone creato con successo!\n\n"</span>
+                <span class="hljs-string">f"📁 Percorso:\n<span class="hljs-subst">{output_path}</span>\n\n"</span>
+                <span class="hljs-string">f"📦 Asset incorporati: <span class="hljs-subst">{asset_count}</span>\n"</span>
+                <span class="hljs-string">f"💾 Dimensione: <span class="hljs-subst">{size_kb:<span class="hljs-number">.1</span>f}</span> KB"</span>
+            )
+
+        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:
+            self.status_label.config(
+                text=<span class="hljs-string">"❌ ERRORE: controlla il messaggio"</span>,
+                foreground=<span class="hljs-string">"red"</span>
+            )
+            messagebox.showerror(
+                <span class="hljs-string">"Errore Bundling"</span>,
+                <span class="hljs-string">f"Si è verificato un errore durante l'elaborazione:\n\n<span class="hljs-subst">{e}</span>"</span>
+            )
+        <span class="hljs-keyword">finally</span>:
+            self.bundle_button.config(state=<span class="hljs-string">'normal'</span>)
+
+
+<span class="hljs-comment"># --- Avvio ---</span>
+<span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">"__main__"</span>:
+    root = tk.Tk()
+    app = BundlerApp(root)
+    root.mainloop()
+</code></pre>
+<hr>
+<h3 id="header-82">📌 Cosa fare nel tuo codice di gioco</h3>
+<p>Per sfruttare il bundler, nel gioco scrivi gli asset così:</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-comment">// ✅ Corretto (funziona in dev E nel file standalone)</span>
+<span class="hljs-keyword">const</span> player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(<span class="hljs-variable constant_">ASSETS</span>[<span class="hljs-string">'player.png'</span>], <span class="hljs-number">100</span>, <span class="hljs-number">100</span>, <span class="hljs-number">32</span>, <span class="hljs-number">32</span>);
+<span class="hljs-keyword">const</span> boom = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sound</span>(<span class="hljs-variable constant_">ASSETS</span>[<span class="hljs-string">'boom.wav'</span>]);
+<span class="hljs-title function_">background</span>(<span class="hljs-variable constant_">ASSETS</span>[<span class="hljs-string">'sfondo.png'</span>]);
+
+<span class="hljs-comment">// ✅ Alternativa con helper (tollera path tipo 'assets/player.png')</span>
+<span class="hljs-keyword">const</span> player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(<span class="hljs-title function_">getAsset</span>(<span class="hljs-string">'assets/player.png'</span>), <span class="hljs-number">100</span>, <span class="hljs-number">100</span>, <span class="hljs-number">32</span>, <span class="hljs-number">32</span>);
+</code></pre>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-comment">// ❌ Da evitare (nel file standalone il path relativo non esisterà)</span>
+<span class="hljs-keyword">const</span> player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(<span class="hljs-string">'assets/player.png'</span>, <span class="hljs-number">100</span>, <span class="hljs-number">100</span>, <span class="hljs-number">32</span>, <span class="hljs-number">32</span>);
+</code></pre>
+<h3 id="header-83">🔄 Flusso consigliato (dev ↔ build)</h3>
+<p>Nel tuo <code>game.js</code>, puoi mantenere compatibilità con entrambe le modalità:</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-comment">// Fallback in dev se ASSETS non esiste</span>
+<span class="hljs-keyword">const</span> A = (<span class="hljs-keyword">typeof</span> <span class="hljs-variable constant_">ASSETS</span> !== <span class="hljs-string">'undefined'</span>) ? <span class="hljs-variable constant_">ASSETS</span> : {
+    <span class="hljs-string">'player.png'</span>: <span class="hljs-string">'assets/player.png'</span>,
+    <span class="hljs-string">'boom.wav'</span>:   <span class="hljs-string">'assets/boom.wav'</span>,
+};
+
+<span class="hljs-keyword">const</span> player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(A[<span class="hljs-string">'player.png'</span>], <span class="hljs-number">100</span>, <span class="hljs-number">100</span>, <span class="hljs-number">32</span>, <span class="hljs-number">32</span>);
+</code></pre>
+<p>Così apri <code>index.html</code> in dev con la cartella <code>assets/</code> reale, e usi il bundler per distribuire un <strong>singolo file</strong> senza dipendenze esterne. 🎉</p>
+</body>
+</html>
