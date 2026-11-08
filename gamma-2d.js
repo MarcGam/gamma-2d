@@ -1,4 +1,5 @@
 // gamma-2d.js - libreria 2D minimalissima ispirata a p5.js
+// v1.1.0 - aggiunta API gravità semplificata (obj.gravity + update())
 
 
 (function() {
@@ -17,7 +18,7 @@
         'shift': 16,
         'control': 17,
         'alt': 18,
-        ' ': 32, // Spazio
+        ' ': 32,
     };
 
     const Mini = {
@@ -45,11 +46,10 @@
         _textAlign: 'left',
         _textBaseline: 'alphabetic',
 
-        // NUOVO: Stato di Debug
         debugMode: false,
         frameCount: 0,
         _spritesMap: {},
-        _groupsMap: {}, //Mappa per raggruppare gli Sprite per TAG/Nome Gruppo
+        _groupsMap: {},
     };
 
     let _buttonClicked = false;
@@ -78,7 +78,7 @@
         },
     });
 
-    // === NUOVE CLASSI UTILITY ===
+    // === CLASSI UTILITY ===
 
     window.Vector = class Vector {
         constructor(x = 0, y = 0) {
@@ -157,7 +157,47 @@
         }
     };
 
-    // === NUOVE FUNZIONI MATEMATICHE GLOBALI ===
+    // ============================================================
+    // CLASSE Gravity — gravità riutilizzabile (NUOVO)
+    // ============================================================
+    window.Gravity = class Gravity {
+        /**
+         * new Gravity(y)       → solo verticale (comodissimo)
+         * new Gravity(x, y)    → vettore completo
+         * Esempi:
+         *   new Gravity(0.5)       → cade (0, 0.5)
+         *   new Gravity(0.3, 0)    → spinge a destra
+         *   new Gravity(0, -0.2)   → va in su
+         */
+        constructor(x = 0, y = 0) {
+            if (typeof x === 'number' && y === 0) {
+                this.x = 0;
+                this.y = x;
+            } else {
+                this.x = x;
+                this.y = y;
+            }
+        }
+        copy() {
+            return new Gravity(this.x, this.y);
+        }
+    };
+
+    // ============================================================
+    // PRESET di gravità pronti all'uso (NUOVO)
+    // ============================================================
+    window.GRAVITY = Object.freeze({
+        ZERO:    Object.freeze(new Gravity(0, 0)),      // niente gravità
+        MOON:    Object.freeze(new Gravity(0, 0.1)),    // cade piano
+        MARS:    Object.freeze(new Gravity(0, 0.2)),    // cade leggera
+        EARTH:   Object.freeze(new Gravity(0, 0.5)),    // default terreno
+        JUPITER: Object.freeze(new Gravity(0, 1.5)),    // cade forte
+        UP:      Object.freeze(new Gravity(0, -0.3)),   // va in su (palloncino)
+        RIGHT:   Object.freeze(new Gravity(0.3, 0)),    // spinge destra (vento)
+        LEFT:    Object.freeze(new Gravity(-0.3, 0)),   // spinge sinistra
+    });
+
+    // === FUNZIONI MATEMATICHE GLOBALI ===
 
     window.map = function(value, start1, stop1, start2, stop2) {
         return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
@@ -170,7 +210,6 @@
     window.getFrameRate = function() {
         return Mini._currentFPS;
     };
-    // <--- AGGIUNTO: Funzione globale per recuperare lo Sprite per nome
     window.getSpriteByName = function(name) {
         if (typeof name !== 'string' || !name) {
             console.error("getSpriteByName richiede una stringa non vuota come nome.");
@@ -182,58 +221,28 @@
         }
         return sprite || null;
     };
-    //Funzione per ottenere un intero casuale tra min e max (inclusi)
     window.randomInt = function(min, max) {
-        // Math.ceil(min) assicura che min sia incluso
         min = Math.ceil(min);
-        // Math.floor(max) assicura che max sia incluso
         max = Math.floor(max);
-        // La formula standard per interi casuali inclusivi
         return Math.floor(Math.random() * (max - min + 1)) + min;
     };
 
-    /**
-     * Calcola la distanza euclidea tra i punti centrali di due oggetti di gioco.
-     * Gli oggetti devono avere proprietà 'x', 'y', 'w' e 'h'.
-     * NOTA: Non usare oggetti Vector, usa oggetti Sprite/Rect/Ellipse.
-     * @param {Object} objA - Il primo oggetto (Sprite, Rect, Ellipse, ecc.).
-     * @param {Object} objB - Il secondo oggetto (Sprite, Rect, Ellipse, ecc.).
-     * @returns {number} La distanza tra i centri degli oggetti.
-     */
     window.dist = function(objA, objB) {
-        // Calcola il centro del primo oggetto
         const centerAx = objA.x + (objA.w / 2);
         const centerAy = objA.y + (objA.h / 2);
-
-        // Calcola il centro del secondo oggetto
         const centerBx = objB.x + (objB.w / 2);
         const centerBy = objB.y + (objB.h / 2);
-
-        // Calcola la distanza
         const dx = centerAx - centerBx;
         const dy = centerAy - centerBy;
-
         return Math.sqrt(dx * dx + dy * dy);
     };
 
-    // FUNZIONI ARRAY UTILITY (Shuffle e Estrazione Casuale)
-
-    /**
-     * Mescola casualmente gli elementi di un array (Fisher-Yates shuffle).
-     * Modifica l'array originale.
-     * @param {Array} array - L'array da mescolare.
-     * @returns {Array} L'array mescolato.
-     */
     window.shuffle = function(array) {
         let currentIndex = array.length,
             randomIndex;
-
         while (currentIndex !== 0) {
-            // Seleziona un elemento rimanente.
             randomIndex = Math.floor(Math.random() * currentIndex);
             currentIndex--;
-
-            // Scambia l'elemento corrente con quello casuale.
             [array[currentIndex], array[randomIndex]] = [
                 array[randomIndex], array[currentIndex]
             ];
@@ -241,28 +250,16 @@
         return array;
     };
 
-    /**
-     * Estrae un elemento casuale dall'array, lo rimuove e lo restituisce.
-     * Simula l'estrazione di una carta da un mazzo mescolato. Modifica l'array originale.
-     * NOTA: Se l'array è vuoto, restituisce 'undefined'. È consigliato verificare la lunghezza
-     * dell'array prima di chiamare questa funzione (es. 'if (array.length > 0) { ... }').
-     * @param {Array} array - L'array da cui estrarre.
-     * @returns {*} L'elemento estratto, o 'undefined' se l'array è vuoto.
-     */
     window.extractRandom = function(array) {
         if (array.length === 0) {
-            return undefined; // Ritorna undefined se il mazzo è vuoto, come richiesto.
+            return undefined;
         }
-        // Sceglie un indice casuale
         const randomIndex = Math.floor(Math.random() * array.length);
-
-        // Rimuove 1 elemento all'indice casuale e restituisce l'elemento rimosso [0]
         const extracted = array.splice(randomIndex, 1);
-
-        return extracted[0]; // Restituisce l'elemento estratto.
+        return extracted[0];
     };
 
-    // === UTILITY ESISTENTI (Mantienute) ===
+    // === UTILITY ESISTENTI ===
 
     window.keyIsDown = function(key) {
         if (typeof key === 'number') return !!Mini._keysDown[key];
@@ -409,26 +406,19 @@
             console.error("getSpritesByTag richiede una stringa non vuota come tag.");
             return [];
         }
-        // Restituisce l'array del gruppo o un array vuoto se non trovato
         return Mini._groupsMap[tag] || [];
     };
 
     window.collidesWithGroup = function(sprite, tag) {
         const group = getSpritesByTag(tag);
-
         for (let i = 0; i < group.length; i++) {
             const member = group[i];
-
-            // Importante: Controlla che non sia lo sprite stesso
             if (sprite !== member) {
-                // Riutilizza il metodo collidesWith esistente (AABB o Pixel-Perfect)
                 if (sprite.collidesWith(member)) {
-                    // Restituisce il membro del gruppo con cui è avvenuta la collisione
                     return member;
                 }
             }
         }
-        // Nessuna collisione trovata
         return null;
     };
 
@@ -438,7 +428,6 @@
         sprite.image = new Image();
         sprite.image.crossOrigin = "Anonymous";
 
-        // 1. Controlla se l'immagine è Base64 (non ha bisogno di attesa di rete)
         const isBase64 = imagePath.startsWith('data:');
 
         if (!isBase64) {
@@ -465,8 +454,6 @@
         };
         sprite.image.src = imagePath;
 
-        // Se è Base64, l'onload viene chiamato immediatamente (o molto velocemente)
-        // Se MiniLib non aspetta il caricamento, possiamo chiamare check subito per sicurezza.
         if (isBase64 && sprite.image.complete) {
             sprite.image.onload();
         }
@@ -483,7 +470,7 @@
             this.image = null;
             this.mask = null;
             this.visible = true;
-            this._toDelete = false; // Flag di eliminazione
+            this._toDelete = false;
 
             this._offsetX = 0;
             this._offsetY = 0;
@@ -502,14 +489,12 @@
             };
             this._isAnimating = false;
             this._count = 0;
-            this.vel = new Vector(0, 0); // NUOVO: Vettore velocità
-            this.gravityVec = new Vector(0, 0); // NUOVO: Vettore gravità
-            //Rotazione e Flip
-            this.rotation = 0; // Angolo in radianti
-            this.flipH = false; // Capovolgimento orizzontale
-            this._flipV = false; // NUOVO: Capovolgimento verticale
+            this.vel = new Vector(0, 0);
+            this.gravityVec = new Vector(0, 0);
+            this.rotation = 0;
+            this.flipH = false;
+            this._flipV = false;
 
-            // <--- AGGIUNTO: Logica di registrazione del nome
             this.name = null;
             if (name && typeof name === 'string') {
                 if (Mini._spritesMap[name]) {
@@ -518,27 +503,21 @@
                 this.name = name;
                 Mini._spritesMap[name] = this;
             }
-            // ----------------------------------------------
 
-            // <--- NUOVA LOGICA: Registrazione del Gruppo/Tag ---
             this.tag = tag;
             if (tag && typeof tag === 'string') {
                 if (!Mini._groupsMap[tag]) {
-                    Mini._groupsMap[tag] = []; // Crea l'array se non esiste
+                    Mini._groupsMap[tag] = [];
                 }
-                Mini._groupsMap[tag].push(this); // Aggiunge lo Sprite al gruppo
+                Mini._groupsMap[tag].push(this);
             }
-            // ----------------------------------------------------
 
             if (imagePath) {
                 _loadSpriteImageAndMask(this, imagePath);
             }
         }
 
-        // Nuovo metodo: Imposta il tag (utile se lo sprite cambia gruppo in gioco)
         setTag(newTag) {
-            // Rimuove dal vecchio gruppo (logica avanzata)
-
             this.tag = newTag;
             if (!Mini._groupsMap[newTag]) {
                 Mini._groupsMap[newTag] = [];
@@ -606,20 +585,16 @@
             const imageData = tempCtx.getImageData(0, 0, displayW, displayH);
             this.mask = imageData.data;
         }
-        // Attiva/disattiva il capovolgimento orizzontale
         flip(enable) {
             this.flipH = !!enable;
         }
 
-        // Attiva/disattiva il capovolgimento verticale  
         flipV(enable) {
             this._flipV = !!enable;
         }
-        // Imposta la rotazione in gradi
         rotate(degrees) {
-            this.rotation = degrees * (Math.PI / 180); // Converte in radianti
+            this.rotation = degrees * (Math.PI / 180);
         }
-        // NUOVO: Metodo per marcare l'oggetto per l'eliminazione
         markForDeletion() {
             this._toDelete = true;
         }
@@ -630,24 +605,19 @@
                 const ctx = Mini.ctx;
                 ctx.save();
 
-                // Calcola il punto centrale
                 const centerX = this.x + this.w / 2;
                 const centerY = this.y + this.h / 2;
 
-                // 1. TRASLAZIONE (Sposta al centro per la rotazione/flip)
                 ctx.translate(centerX, centerY);
 
-                // 2. ROTAZIONE
                 if (this.rotation !== 0) {
                     ctx.rotate(this.rotation);
                 }
-                // 3. FLIP
                 let scaleX = this.flipH ? -1 : 1;
-                let scaleY = this._flipV ? -1 : 1; //Gestione flip V
+                let scaleY = this._flipV ? -1 : 1;
                 ctx.scale(scaleX, scaleY);
 
 
-                // Dati da disegnare (si assume che le coordinate siano relative al centro traslato)
                 const drawX = -this.w / 2;
                 const drawY = -this.h / 2;
 
@@ -661,18 +631,15 @@
                     ctx.drawImage(this.image, drawX, drawY, this.w, this.h);
                 }
 
-                // Bounding Box in debug mode (disegnato prima del restore)
                 if (Mini.debugMode) {
                     ctx.strokeStyle = 'red';
                     ctx.lineWidth = 1;
-                    // Disegna il box attorno alle coordinate del centro
                     ctx.strokeRect(drawX, drawY, this.w, this.h);
                 }
 
-                ctx.restore(); // Ripristina tutte le trasformazioni
+                ctx.restore();
             }
         }
-        // Gravità:
         addGravity(gVec) {
             if (gVec instanceof Vector) {
                 this.gravityVec = gVec.copy();
@@ -680,9 +647,34 @@
                 console.warn("addGravity richiede un oggetto Vector.");
             }
         }
+
+        // --- NUOVO: proprietà gravity (setter + getter) ---
+        set gravity(v) {
+            if (typeof v === 'number') {
+                this.gravityVec.x = 0;
+                this.gravityVec.y = v;
+            } else if (v && typeof v.x === 'number' && typeof v.y === 'number') {
+                this.gravityVec.x = v.x;
+                this.gravityVec.y = v.y;
+            } else {
+                console.warn('gravity deve essere number, Vector o Gravity');
+            }
+        }
+        get gravity() {
+            return this.gravityVec;
+        }
+
+        // --- NUOVO: applica gravità + movimento in un colpo ---
+        update() {
+            this.vel.x += this.gravityVec.x;
+            this.vel.y += this.gravityVec.y;
+            this.x += this.vel.x;
+            this.y += this.vel.y;
+            return this;
+        }
+
         collidesWith(otherSprite) {
             if (!this.visible || !otherSprite.visible) return false;
-            // ... (Logica di collisione esistente) ...
             if (!this.mask || !otherSprite.mask) {
                 return (
                     this.x < otherSprite.x + otherSprite.w &&
@@ -758,48 +750,38 @@
             return false;
         }
     };
+
     // ==========================================================
-    // CLASSE: eSprite (Emoji Sprite) 
+    // CLASSE: eSprite (Emoji Sprite)
     // ==========================================================
 
     window.eSprite = class eSprite {
-        /**
-         * @param {string} emojiText - Il carattere emoji da disegnare (es. '😀').
-         * @param {number} x - Coordinata X dell'angolo superiore sinistro.
-         * @param {number} y - Coordinata Y dell'angolo superiore sinistro.
-         * @param {number} [size=30] - Dimensione del carattere (in pixel).
-         */
         constructor(emojiText, x, y, size = 30) {
             this.emojiText = emojiText || '😃';
             this.x = x || 0;
             this.y = y || 0;
             this.textSize = size;
-            this.h = size; // Altezza base del bounding box (determinata dalla dimensione del font)
-            this.w = 0; // Larghezza del bounding box (calcolata in draw() tramite textWidth)
+            this.h = size;
+            this.w = 0;
 
             this.visible = true;
-            this._toDelete = false; // NUOVO: Flag di eliminazione
+            this._toDelete = false;
 
             this._offsetX = 0;
             this._offsetY = 0;
             this.vel = new Vector(0, 0);
             this.gravityVec = new Vector(0, 0);
-            // NUOVO: Rotazione e Flip
-            this.rotation = 0; // Angolo in radianti
-            this.flipH = false; // Capovolgimento orizzontale
-            this._flipV = false; // Capovolgimento verticale
+            this.rotation = 0;
+            this.flipH = false;
+            this._flipV = false;
         }
 
-        // Metodi di utilità (ereditati dalle funzionalità dello Sprite)
-        // Cambia l'emoji visualizzata
-        // Accetta solo una stringa emoji come nuovo valore.
         changeEmoji(newEmojiString) {
             if (typeof newEmojiString === 'string' && newEmojiString.length > 0) {
                 this.emojiText = newEmojiString;
             } else {
                 console.warn("changeEmoji richiede una stringa emoji valida.");
             }
-            // La larghezza (this.w) verrà ricalcolata nel prossimo draw()
         }
         getEmoji() {
             return this.emojiText;
@@ -812,7 +794,31 @@
             }
         }
 
-        // L'eSprite utilizza una semplice collisione basata sul bounding box (rettangolo)
+        // --- NUOVO: proprietà gravity (setter + getter) ---
+        set gravity(v) {
+            if (typeof v === 'number') {
+                this.gravityVec.x = 0;
+                this.gravityVec.y = v;
+            } else if (v && typeof v.x === 'number' && typeof v.y === 'number') {
+                this.gravityVec.x = v.x;
+                this.gravityVec.y = v.y;
+            } else {
+                console.warn('gravity deve essere number, Vector o Gravity');
+            }
+        }
+        get gravity() {
+            return this.gravityVec;
+        }
+
+        // --- NUOVO: applica gravità + movimento in un colpo ---
+        update() {
+            this.vel.x += this.gravityVec.x;
+            this.vel.y += this.gravityVec.y;
+            this.x += this.vel.x;
+            this.y += this.vel.y;
+            return this;
+        }
+
         collidesWith(other) {
             if (!this.visible || !other.visible) return false;
             return (this.x < other.x + other.w && this.x + this.w > other.x &&
@@ -845,24 +851,18 @@
             }
             return false;
         }
-        // AGGIUNGI O VERIFICA QUESTI METODI NELLA CLASSE eSprite:
 
-        // Attiva/disattiva il capovolgimento orizzontale
         flip(enable) {
             this.flipH = !!enable;
         }
 
-        // Attiva/disattiva il capovolgimento verticale
         flipV(enable) {
             this._flipV = !!enable;
         }
 
-        // Imposta la rotazione in gradi
         rotate(degrees) {
-            // Converte i gradi in radianti e lo salva nella proprietà
             this.rotation = degrees * (Math.PI / 180);
         }
-        // NUOVO: Metodo per marcare l'oggetto per l'eliminazione
         markForDeletion() {
             this._toDelete = true;
         }
@@ -873,59 +873,40 @@
             const ctx = Mini.ctx;
             ctx.save();
 
-            // Calcola il punto centrale per la rotazione
             const centerX = this.x + this.w / 2;
             const centerY = this.y + this.h / 2;
 
-            // Imposta lo stile del testo per calcolare la larghezza (this.w)
             textSize(this.textSize);
             this.w = textWidth(this.emojiText);
 
-            // 1. TRASLAZIONE (Sposta al centro per la rotazione/flip)
             ctx.translate(centerX, centerY);
 
-            // 2. ROTAZIONE
             if (this.rotation !== 0) {
                 ctx.rotate(this.rotation);
             }
 
-            // 3. FLIP (Gestisce sia orizzontale che verticale)
             let scaleX = this.flipH ? -1 : 1;
-            let scaleY = this._flipV ? -1 : 1; // Gestione flip V
+            let scaleY = this._flipV ? -1 : 1;
             ctx.scale(scaleX, scaleY);
 
-            //let flipScale = 1;
-            //if (this.flipH) {
-            //   flipScale = -1;
-            //}
-            //ctx.scale(flipScale, 1);
-
-            // Imposta il colore e l'allineamento
             fill('black');
-            textAlign('center'); // Usa 'center' per disegnare in (0, 0)
+            textAlign('center');
             textBaseline('middle');
 
-            // Calcolo Y: (0) è il centro, quindi la Y è corretta
-            // Usiamo una leggera compensazione per allineare l'emoji al centro verticale del font
-            let textYOffset = this.h * 0.1; // Compensazione verticale (regola il centro verticale)
+            let textYOffset = this.h * 0.1;
 
-            // 4. Disegna l'Emoji (a (0, 0) - drawX/drawY sono 0)
             text(this.emojiText, 0, textYOffset);
 
-            // 5. Bounding Box (Debug Mode)
             if (Mini.debugMode) {
                 ctx.strokeStyle = 'purple';
                 ctx.lineWidth = 1;
-                // Disegna il box attorno al centro traslato
                 ctx.strokeRect(-this.w / 2, -this.h / 2, this.w, this.h);
             }
 
             ctx.restore();
         }
+    };
 
-        // Metodi di Sprite non applicabili (lasciati come placeholder o rimossi)
-        // Non supporta animazione o cambio immagine
-    }
     window.Rect = class Rect {
         constructor(x, y, w, h) {
             this.x = x || 0;
@@ -935,9 +916,9 @@
             this._offsetX = 0;
             this._offsetY = 0;
             this.visible = true;
-            this._toDelete = false; // NUOVO: Flag di eliminazione
-            this.vel = new Vector(0, 0); // NUOVO: Vettore velocità
-            this.gravityVec = new Vector(0, 0); // NUOVO: Vettore gravità
+            this._toDelete = false;
+            this.vel = new Vector(0, 0);
+            this.gravityVec = new Vector(0, 0);
         }
 
         draw() {
@@ -954,7 +935,6 @@
             ctx.fill();
             if (!Mini._noStroke) ctx.stroke();
 
-            // NUOVO: Disegna Bounding Box in debug mode
             if (Mini.debugMode) {
                 ctx.strokeStyle = 'lime';
                 ctx.lineWidth = 1;
@@ -962,7 +942,6 @@
             }
             ctx.restore();
         }
-        // NUOVO METODO:
         addGravity(gVec) {
             if (gVec instanceof Vector) {
                 this.gravityVec = gVec.copy();
@@ -970,7 +949,32 @@
                 console.warn("addGravity richiede un oggetto Vector.");
             }
         }
-        // NUOVO: Metodo per marcare l'oggetto per l'eliminazione
+
+        // --- NUOVO: proprietà gravity (setter + getter) ---
+        set gravity(v) {
+            if (typeof v === 'number') {
+                this.gravityVec.x = 0;
+                this.gravityVec.y = v;
+            } else if (v && typeof v.x === 'number' && typeof v.y === 'number') {
+                this.gravityVec.x = v.x;
+                this.gravityVec.y = v.y;
+            } else {
+                console.warn('gravity deve essere number, Vector o Gravity');
+            }
+        }
+        get gravity() {
+            return this.gravityVec;
+        }
+
+        // --- NUOVO: applica gravità + movimento in un colpo ---
+        update() {
+            this.vel.x += this.gravityVec.x;
+            this.vel.y += this.gravityVec.y;
+            this.x += this.vel.x;
+            this.y += this.vel.y;
+            return this;
+        }
+
         markForDeletion() {
             this._toDelete = true;
         }
@@ -1017,9 +1021,9 @@
             this._offsetX = 0;
             this._offsetY = 0;
             this.visible = true;
-            this._toDelete = false; // NUOVO: Flag di eliminazione
-            this.vel = new Vector(0, 0); // NUOVO: Vettore velocità
-            this.gravityVec = new Vector(0, 0); // NUOVO: Vettore gravità
+            this._toDelete = false;
+            this.vel = new Vector(0, 0);
+            this.gravityVec = new Vector(0, 0);
         }
 
         draw() {
@@ -1035,7 +1039,6 @@
                 ctx.stroke();
             }
 
-            // NUOVO: Disegna Bounding Box in debug mode
             if (Mini.debugMode) {
                 const rectX = this.x - this.w / 2;
                 const rectY = this.y - this.h / 2;
@@ -1045,7 +1048,6 @@
             }
             ctx.restore();
         }
-        // NUOVO METODO:
         addGravity(gVec) {
             if (gVec instanceof Vector) {
                 this.gravityVec = gVec.copy();
@@ -1053,13 +1055,37 @@
                 console.warn("addGravity richiede un oggetto Vector.");
             }
         }
-        // NUOVO: Metodo per marcare l'oggetto per l'eliminazione
+
+        // --- NUOVO: proprietà gravity (setter + getter) ---
+        set gravity(v) {
+            if (typeof v === 'number') {
+                this.gravityVec.x = 0;
+                this.gravityVec.y = v;
+            } else if (v && typeof v.x === 'number' && typeof v.y === 'number') {
+                this.gravityVec.x = v.x;
+                this.gravityVec.y = v.y;
+            } else {
+                console.warn('gravity deve essere number, Vector o Gravity');
+            }
+        }
+        get gravity() {
+            return this.gravityVec;
+        }
+
+        // --- NUOVO: applica gravità + movimento in un colpo ---
+        update() {
+            this.vel.x += this.gravityVec.x;
+            this.vel.y += this.gravityVec.y;
+            this.x += this.vel.x;
+            this.y += this.vel.y;
+            return this;
+        }
+
         markForDeletion() {
             this._toDelete = true;
         }
         collidesWith(other) {
             if (!this.visible || !other.visible) return false;
-            // Collisione box to box (come prima)
             const rect1 = {
                 x: this.x - this.w / 2,
                 y: this.y - this.h / 2,
@@ -1178,12 +1204,10 @@
 
             text(this.label, textX, textY);
 
-            // Ripristina impostazioni predefinite
             textAlign('left');
             textBaseline('alphabetic');
             ctx.restore();
 
-            // NUOVO: Disegna Bounding Box in debug mode
             if (Mini.debugMode) {
                 ctx.save();
                 ctx.strokeStyle = 'lime';
@@ -1245,7 +1269,6 @@
         Mini.frameRate = Math.max(1, fps || 60);
     };
 
-    // NUOVO: Funzione globale per attivare/disattivare la modalità debug
     window.debugMode = function(enabled) {
         Mini.debugMode = enabled === undefined ? true : !!enabled;
     };
@@ -1268,7 +1291,6 @@
         text(mouseText, textX, textY + 20);
 
         Mini.ctx.restore();
-        // Ripristina i valori di stile di Mini per non interferire con draw()
         fill(Mini.fillStyle);
         stroke(Mini.strokeStyle);
         textSize(parseInt(Mini._font));
@@ -1281,12 +1303,11 @@
         const elapsed = timestamp - Mini._lastFrameTime;
 
         if (elapsed >= period) {
-            Mini._currentFPS = 1000 / elapsed; // Calcola FPS corrente
+            Mini._currentFPS = 1000 / elapsed;
             Mini._lastFrameTime = timestamp - (elapsed % period);
 
             try {
                 if (typeof draw === 'function') {
-                    // Gestione Sfondo
                     if (Mini.bgImage && Mini.bgImage.complete && Mini.bgImage.naturalWidth !== 0) {
                         Mini.ctx.drawImage(Mini.bgImage, 0, 0, Mini.width, Mini.height);
                     } else {
@@ -1298,10 +1319,8 @@
 
                     Mini._noStroke = false;
                     Mini.frameCount++;
-                    // Esecuzione logica di gioco
                     draw();
 
-                    // Disegna informazioni di debug
                     if (Mini.debugMode) {
                         _drawDebugInfo();
                     }
@@ -1329,7 +1348,6 @@
     }
 
     function init() {
-        // ... (Logica di inizializzazione canvas esistente) ...
         if (!document.getElementById('minicanvas')) {
             createMiniCanvas(Mini.width, Mini.height);
         } else {
@@ -1346,7 +1364,6 @@
             Mini.ctx.lineWidth = 1;
         }
 
-        // Event listeners per mouse, tastiera e touch... (come prima)
         Mini.canvas.addEventListener('mousemove', (ev) => {
             const rect = Mini.canvas.getBoundingClientRect();
             Mini._mouseX = Math.round((ev.clientX - rect.left) * (Mini.canvas.width / rect.width));
@@ -1361,7 +1378,7 @@
             getKeyMapping(ev).forEach(key => {
                 Mini._keysDown[key] = true;
             });
-            if (typeof keyPressed === 'function') keyPressed(ev); // NUOVO: Hook per keyPressed()
+            if (typeof keyPressed === 'function') keyPressed(ev);
         });
 
         window.addEventListener('keyup', (ev) => {
@@ -1369,14 +1386,13 @@
                 delete Mini._keysDown[key];
                 Mini._keysReleased[key] = true;
             });
-            if (typeof keyReleased === 'function') keyReleased(ev); // NUOVO: Hook per keyReleased()
+            if (typeof keyReleased === 'function') keyReleased(ev);
         });
 
         Mini.canvas.addEventListener('click', (ev) => {
-            if (typeof mouseClicked === 'function') mouseClicked(ev); // NUOVO: Hook per mouseClicked()
+            if (typeof mouseClicked === 'function') mouseClicked(ev);
         });
 
-        // Touch support... (come prima)
         Mini.canvas.addEventListener('touchstart', (ev) => {
             ev.preventDefault();
             const touch = ev.touches[0];

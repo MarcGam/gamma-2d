@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Test gamma-2d CDN</title></head>
+<body>
+    <script src="https://cdn.jsdelivr.net/gh/MarcGam/gamma-2d@1.2.0/gamma-2d.js"></script>
+    <script>
+        function setup() { createMiniCanvas(600, 400); }
+
+        let x = 50;
+        function draw() {
+            background(20, 20, 30);
+            if (keyIsDown('arrowright')) x += 4;
+            if (keyIsDown('arrowleft'))  x -= 4;
+
+            fill('cyan');
+            textSize(28);
+            textAlign('center');
+            textBaseline('middle');
+            text('CDN OK 🚀', width / 2, 150);
+
+            fill('orange');
+            new Rect(x, 220, 40, 40).draw();
+        }
+    </script>
+</body>
+</html>

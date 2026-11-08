@@ -44,24 +44,17 @@ th { background: #f8f9fa; }
 img { max-width: 100%; border-radius: 8px; }
 .view-editor-only #preview-panel, .view-editor-only .resizer { display: none; }
 
-/* Fallback espliciti: assicurano i bordi delle tabelle anche se l'estrazione
-   delle regole #preview dovesse in futuro cambiare selettori o ordine. */
 table { border-collapse: collapse; border-spacing: 0; }
 th, td { border: 1px solid #e0e4e8; padding: 8px 12px; }
 th { background: #f8f9fa; }
 
-/* Forza la stampa di colori e bordi (altrimenti alcuni browser attenuano
-   i colori chiari durante la stampa / esportazione PDF) */
 * {
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
 
-/* Margini pagina puliti per PDF / stampa */
 @page { margin: 12mm; }
 
-/* Override specifici per la stampa: bordi più scuri per essere sempre visibili
-   su carta bianca, indipendentemente dal tema attivo. */
 @media print {
   body { margin: 0; padding: 0; }
   th, td { border: 1px solid #666 !important; }
@@ -71,7 +64,7 @@ th { background: #f8f9fa; }
 </style>
 </head>
 <body><h1 id="header-0">📘 Documentazione Completa: gamma-2d.js</h1>
-<p>Libreria JavaScript 2D minimalista ispirata a <strong>p5.js</strong>, progettata per creare giochi e animazioni interattive direttamente nel browser usando l'elemento <code>&lt;canvas&gt;</code>. Offre un'API semplice e intuitiva con supporto per sprite, animazioni, emoji, forme geometriche, collisioni pixel-perfect, drag &amp; drop, audio e molto altro.</p>
+<p>Libreria JavaScript 2D minimalista ispirata a <strong>p5.js</strong>, progettata per creare giochi e animazioni interattive direttamente nel browser usando l'elemento <code>&lt;canvas&gt;</code>. Offre un'API semplice e intuitiva con supporto per sprite, animazioni, emoji, forme geometriche, collisioni pixel-perfect, drag &amp; drop, audio, gravità semplificata e molto altro.</p>
 <hr>
 <h2 id="header-1">📑 Indice</h2>
 <ol>
@@ -82,6 +75,8 @@ th { background: #f8f9fa; }
 <li><a href="#5-gestione-canvas-e-sfondo">Gestione Canvas e Sfondo</a></li>
 <li><a href="#6-disegno-base-fill-stroke-text">Disegno Base: Fill, Stroke, Text</a></li>
 <li><a href="#7-classe-vector">Classe <code>Vector</code></a></li>
+<li><a href="#7b-classe-gravity">Classe <code>Gravity</code> e preset <code>GRAVITY</code></a></li>
+<li><a href="#7c-gravita-semplificata">🌍 Gravità semplificata (per ragazzi)</a></li>
 <li><a href="#8-funzioni-matematiche-e-utility">Funzioni Matematiche e Utility</a></li>
 <li><a href="#9-input-tastiera-e-mouse">Input: Tastiera e Mouse</a></li>
 <li><a href="#10-classe-sprite">Classe <code>Sprite</code></a></li>
@@ -135,6 +130,10 @@ th { background: #f8f9fa; }
 <td>Classe <code>Sound</code> con loop e volume</td>
 </tr>
 <tr>
+<td>🌍 <strong>Gravità</strong></td>
+<td>API semplificata <code>obj.gravity = 0.5; obj.update()</code> + preset <code>GRAVITY.MOON</code>, <code>EARTH</code>, ecc.</td>
+</tr>
+<tr>
 <td>🏷️ <strong>Tag/Gruppi</strong></td>
 <td>Organizzazione degli sprite per collisioni di gruppo</td>
 </tr>
@@ -148,6 +147,8 @@ th { background: #f8f9fa; }
 <p>Includi il file nel tuo HTML <strong>prima</strong> del tuo script di gioco:</p>
 <pre><code class="language-html hljs language-xml" data-highlighted="yes"><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">"gamma-2d.js"</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
 <span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">"game.js"</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">"https://cdn.jsdelivr.net/gh/MarcGam/gamma-2d@1.1.0/gamma-2d.js"</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
+
 </code></pre>
 <h3 id="header-4">Script di gioco minimo (<code>game.js</code>)</h3>
 <pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
@@ -439,6 +440,204 @@ vel.<span class="hljs-title function_">add</span>(acc).<span class="hljs-title f
 <p>💡 <code>Vector</code> è usato internamente da <code>Sprite</code>, <code>Rect</code>, <code>Ellipse</code> e <code>eSprite</code> (proprietà <code>vel</code> e <code>gravityVec</code>).</p>
 </blockquote>
 <hr>
+<h2 id="header-90">7b. Classe <code>Gravity</code> e preset <code>GRAVITY</code></h2>
+<p><code>Gravity</code> è una classe compagna di <code>Vector</code>, ma pensata per essere <strong>leggibile e riutilizzabile</strong>. Permette di creare una gravità una volta sola e assegnarla a più oggetti.</p>
+<h3 id="header-91">Costruttore</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">new</span> <span class="hljs-title class_">Gravity</span>(y)          <span class="hljs-comment">// solo verticale — comodissimo</span>
+<span class="hljs-keyword">new</span> <span class="hljs-title class_">Gravity</span>(x, y)       <span class="hljs-comment">// vettore completo</span>
+</code></pre>
+<table>
+<thead><tr><th>Parametro</th><th>Tipo</th><th>Descrizione</th></tr></thead>
+<tbody>
+<tr><td><code>x</code></td><td>number</td><td>Spinta orizzontale (positivo = destra)</td></tr>
+<tr><td><code>y</code></td><td>number</td><td>Spinta verticale (positivo = giù)</td></tr>
+</tbody></table>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> g = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Gravity</span>(<span class="hljs-number">0.5</span>);       <span class="hljs-comment">// cade (0, 0.5)</span>
+<span class="hljs-keyword">const</span> vento = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Gravity</span>(<span class="hljs-number">0.3</span>, <span class="hljs-number">0</span>); <span class="hljs-comment">// spinge a destra</span>
+<span class="hljs-keyword">const</span> su = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Gravity</span>(<span class="hljs-number">0</span>, -<span class="hljs-number">0.2</span>);   <span class="hljs-comment">// va in su (palloncino)</span>
+</code></pre>
+<h3 id="header-92">Preset pronti — <code>GRAVITY</code></h3>
+<p>Ogni preset è un oggetto <code>Gravity</code> <strong>immutabile e condivisibile</strong>. Assegnalo direttamente a <code>obj.gravity</code>:</p>
+<table>
+<thead><tr><th>Preset</th><th>Valore</th><th>Effetto</th></tr></thead>
+<tbody>
+<tr><td><code>GRAVITY.ZERO</code></td><td>(0, 0)</td><td>Nessuna gravità (spazio)</td></tr>
+<tr><td><code>GRAVITY.MOON</code></td><td>(0, 0.1)</td><td>Cade molto piano</td></tr>
+<tr><td><code>GRAVITY.MARS</code></td><td>(0, 0.2)</td><td>Cade piano</td></tr>
+<tr><td><code>GRAVITY.EARTH</code></td><td>(0, 0.5)</td><td>Cade normalmente (default)</td></tr>
+<tr><td><code>GRAVITY.JUPITER</code></td><td>(0, 1.5)</td><td>Cade forte</td></tr>
+<tr><td><code>GRAVITY.UP</code></td><td>(0, -0.3)</td><td>Va in su (palloncino)</td></tr>
+<tr><td><code>GRAVITY.RIGHT</code></td><td>(0.3, 0)</td><td>Spinge a destra (vento)</td></tr>
+<tr><td><code>GRAVITY.LEFT</code></td><td>(-0.3, 0)</td><td>Spinge a sinistra</td></tr>
+</tbody></table>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-comment">// Tre oggetti con gravità diverse, in una riga ciascuno</span>
+player.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">EARTH</span>;
+alieno.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">MOON</span>;
+palloncino.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">UP</span>;
+</code></pre>
+<blockquote>
+<p>💡 <code>Gravity</code> si comporta come <code>Vector</code> (ha <code>.x</code> e <code>.y</code> e il metodo <code>.copy()</code>). Puoi quindi usarla ovunque serva un vettore, ma è pensata per essere più espressiva quando parli di gravità.</p>
+</blockquote>
+<hr>
+<h2 id="header-93">7c. 🌍 Gravità semplificata (per ragazzi)</h2>
+<p>Questa è la parte <strong>più importante</strong> da ricordare. La libreria offre un'API che rende la gravità <strong>una sola riga</strong>:</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes">obj.<span class="hljs-property">gravity</span> = <span class="hljs-number">0.5</span>;    <span class="hljs-comment">// 1. imposta la gravità</span>
+obj.<span class="hljs-title function_">update</span>();         <span class="hljs-comment">// 2. applica fisica (gravità + movimento)</span>
+obj.<span class="hljs-title function_">draw</span>();           <span class="hljs-comment">// 3. disegna</span>
+</code></pre>
+<p>Contro la versione manuale (che comunque funziona ancora):</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes">obj.<span class="hljs-title function_">addGravity</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Vector</span>(<span class="hljs-number">0</span>, <span class="hljs-number">0.5</span>));
+obj.<span class="hljs-property">vel</span>.<span class="hljs-title function_">add</span>(obj.<span class="hljs-property">gravityVec</span>);
+obj.<span class="hljs-property">x</span> += obj.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span>;
+obj.<span class="hljs-property">y</span> += obj.<span class="hljs-property">vel</span>.<span class="hljs-property">y</span>;
+obj.<span class="hljs-title function_">draw</span>();
+</code></pre>
+<h3 id="header-94">Il setter <code>gravity</code></h3>
+<p>Accetta <strong>tre tipi diversi</strong>, tutti comodissimi:</p>
+<table>
+<thead><tr><th>Cosa assegnare</th><th>Esempio</th><th>Uso consigliato</th></tr></thead>
+<tbody>
+<tr><td>Numero (solo Y)</td><td><code>obj.gravity = 0.5;</code></td><td>Gravità verticale normale</td></tr>
+<tr><td>Numero negativo</td><td><code>obj.gravity = -0.2;</code></td><td>Va in su (palloncino)</td></tr>
+<tr><td><code>Vector</code> / <code>Gravity</code></td><td><code>obj.gravity = GRAVITY.MOON;</code></td><td>Preset o gravità personalizzata</td></tr>
+</tbody></table>
+<h3 id="header-95">Il metodo <code>update()</code></h3>
+<p>Fa in un colpo:</p>
+<ol>
+<li><code>vel.x += gravityVec.x</code> (accelerazione orizzontale)</li>
+<li><code>vel.y += gravityVec.y</code> (accelerazione verticale)</li>
+<li><code>x += vel.x</code> (movimento orizzontale)</li>
+<li><code>y += vel.y</code> (movimento verticale)</li>
+</ol>
+<p>Restituisce <code>this</code>, quindi puoi concatenare: <code>obj.update().draw()</code>.</p>
+<blockquote>
+<p>⚠️ <strong>Va chiamato una volta per frame</strong> dentro il tuo <code>draw()</code>. Se non lo chiami, l'oggetto non si muove (utile per "congelarlo" in pausa).</p>
+</blockquote>
+<h3 id="header-96">Esempio 1 — Caduta libera (una sola riga di fisica)</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">let</span> palla;
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">800</span>, <span class="hljs-number">600</span>);
+    palla = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Ellipse</span>(<span class="hljs-number">400</span>, <span class="hljs-number">50</span>, <span class="hljs-number">40</span>, <span class="hljs-number">40</span>);
+    palla.<span class="hljs-property">gravity</span> = <span class="hljs-number">0.5</span>;
+}
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">background</span>(<span class="hljs-number">30</span>, <span class="hljs-number">30</span>, <span class="hljs-number">40</span>);
+    palla.<span class="hljs-title function_">update</span>();   <span class="hljs-comment">// ← tutta la fisica qui</span>
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'red'</span>);
+    palla.<span class="hljs-title function_">draw</span>();
+}
+</code></pre>
+<h3 id="header-97">Esempio 2 — Terra, Luna, Spazio (gravità diverse)</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">let</span> p1, p2, p3;
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">800</span>, <span class="hljs-number">400</span>);
+    p1 = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(<span class="hljs-number">100</span>, <span class="hljs-number">50</span>, <span class="hljs-number">40</span>, <span class="hljs-number">40</span>);
+    p2 = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(<span class="hljs-number">300</span>, <span class="hljs-number">50</span>, <span class="hljs-number">40</span>, <span class="hljs-number">40</span>);
+    p3 = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(<span class="hljs-number">500</span>, <span class="hljs-number">50</span>, <span class="hljs-number">40</span>, <span class="hljs-number">40</span>);
+
+    p1.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">JUPITER</span>;   <span class="hljs-comment">// cade forte</span>
+    p2.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">EARTH</span>;     <span class="hljs-comment">// cade normale</span>
+    p3.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">MOON</span>;      <span class="hljs-comment">// cade piano</span>
+}
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">background</span>(<span class="hljs-number">30</span>, <span class="hljs-number">30</span>, <span class="hljs-number">40</span>);
+
+    p1.<span class="hljs-title function_">update</span>();
+    p2.<span class="hljs-title function_">update</span>();
+    p3.<span class="hljs-title function_">update</span>();
+
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'red'</span>);    p1.<span class="hljs-title function_">draw</span>();
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'orange'</span>); p2.<span class="hljs-title function_">draw</span>();
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'cyan'</span>);   p3.<span class="hljs-title function_">draw</span>();
+}
+</code></pre>
+<h3 id="header-98">Esempio 3 — Player che salta (gioco platform)</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">let</span> player, suolo;
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">800</span>, <span class="hljs-number">600</span>);
+    player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(<span class="hljs-number">400</span>, <span class="hljs-number">100</span>, <span class="hljs-number">40</span>, <span class="hljs-number">40</span>);
+    player.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">EARTH</span>;
+    suolo = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(<span class="hljs-number">0</span>, <span class="hljs-number">550</span>, <span class="hljs-number">800</span>, <span class="hljs-number">50</span>);
+}
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">background</span>(<span class="hljs-string">'skyblue'</span>);
+
+    <span class="hljs-comment">// Salto (solo se tocca il suolo)</span>
+    <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowup'</span>) &amp;&amp; player.<span class="hljs-property">y</span> &gt;= <span class="hljs-number">510</span>) {
+        player.<span class="hljs-property">vel</span>.<span class="hljs-property">y</span> = -<span class="hljs-number">12</span>;
+    }
+    <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowleft'</span>))  player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span> = -<span class="hljs-number">5</span>;
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowright'</span>)) player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span> = <span class="hljs-number">5</span>;
+    <span class="hljs-keyword">else</span> player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span> = <span class="hljs-number">0</span>;
+
+    <span class="hljs-comment">// Fisica</span>
+    player.<span class="hljs-title function_">update</span>();
+
+    <span class="hljs-comment">// Blocca il player sul suolo</span>
+    <span class="hljs-keyword">if</span> (player.<span class="hljs-title function_">collidesWith</span>(suolo) &amp;&amp; player.<span class="hljs-property">vel</span>.<span class="hljs-property">y</span> &gt; <span class="hljs-number">0</span>) {
+        player.<span class="hljs-property">y</span> = suolo.<span class="hljs-property">y</span> - player.<span class="hljs-property">h</span>;
+        player.<span class="hljs-property">vel</span>.<span class="hljs-property">y</span> = <span class="hljs-number">0</span>;
+    }
+
+    <span class="hljs-comment">// Disegno</span>
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'brown'</span>); suolo.<span class="hljs-title function_">draw</span>();
+    <span class="hljs-title function_">fill</span>(<span class="hljs-string">'red'</span>);   player.<span class="hljs-title function_">draw</span>();
+}
+</code></pre>
+<h3 id="header-99">Esempio 4 — Vento laterale (gravità orizzontale)</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">800</span>, <span class="hljs-number">600</span>);
+    foglia = <span class="hljs-keyword">new</span> <span class="hljs-title function_">eSprite</span>(<span class="hljs-string">'🍃'</span>, <span class="hljs-number">400</span>, <span class="hljs-number">300</span>, <span class="hljs-number">40</span>);
+    foglia.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">RIGHT</span>;   <span class="hljs-comment">// spinta orizzontale</span>
+}
+</code></pre>
+<h3 id="header-100">Esempio 5 — Palloncino che sale</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
+    <span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">800</span>, <span class="hljs-number">600</span>);
+    palloncino = <span class="hljs-keyword">new</span> <span class="hljs-title function_">eSprite</span>(<span class="hljs-string">'🎈'</span>, <span class="hljs-number">400</span>, <span class="hljs-number">500</span>, <span class="hljs-number">40</span>);
+    palloncino.<span class="hljs-property">gravity</span> = -<span class="hljs-number">0.2</span>;   <span class="hljs-comment">// negativo = va in su</span>
+}
+</code></pre>
+<h3 id="header-101">Esempio 6 — Cambiare gravità al volo</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">function</span> <span class="hljs-title function_">keyPressed</span>(<span class="hljs-params">ev</span>) {
+    <span class="hljs-keyword">if</span> (ev.<span class="hljs-property">key</span> === <span class="hljs-string">'l'</span>) {
+        player.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">MOON</span>;   <span class="hljs-comment">// modalità luna</span>
+    }
+    <span class="hljs-keyword">if</span> (ev.<span class="hljs-property">key</span> === <span class="hljs-string">'e'</span>) {
+        player.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">EARTH</span>;  <span class="hljs-comment">// modalità terra</span>
+    }
+    <span class="hljs-keyword">if</span> (ev.<span class="hljs-property">key</span> === <span class="hljs-string">'z'</span>) {
+        player.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">ZERO</span>;   <span class="hljs-comment">// galleggia</span>
+    }
+}
+</code></pre>
+<h3 id="header-102">📋 Cheat sheet per la classe</h3>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-comment">// Impostare la gravità (scegli UNA riga):</span>
+obj.<span class="hljs-property">gravity</span> = <span class="hljs-number">0.5</span>;                  <span class="hljs-comment">// cade normale</span>
+obj.<span class="hljs-property">gravity</span> = <span class="hljs-number">0.1</span>;                  <span class="hljs-comment">// cade piano (Luna)</span>
+obj.<span class="hljs-property">gravity</span> = <span class="hljs-number">1.5</span>;                  <span class="hljs-comment">// cade forte (Giove)</span>
+obj.<span class="hljs-property">gravity</span> = -<span class="hljs-number">0.2</span>;                 <span class="hljs-comment">// va in su (palloncino)</span>
+obj.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">EARTH</span>;        <span class="hljs-comment">// preset leggibile</span>
+obj.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">MOON</span>;
+obj.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">JUPITER</span>;
+obj.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">ZERO</span>;         <span class="hljs-comment">// nessuna gravità (spazio)</span>
+
+<span class="hljs-comment">// Applicare fisica (una volta per frame):</span>
+obj.<span class="hljs-title function_">update</span>();
+
+<span class="hljs-comment">// Disegnare:</span>
+obj.<span class="hljs-title function_">draw</span>();
+</code></pre>
+<blockquote>
+<p>🔄 <strong>Retrocompatibilità</strong>: <code>addGravity(new Vector(...))</code> e l'accesso diretto a <code>gravityVec</code> continuano a funzionare. La nuova API è un'aggiunta, non una sostituzione. Chi ha codice vecchio non si rompe.</p>
+</blockquote>
+<hr>
 <h2 id="header-26">8. Funzioni Matematiche e Utility</h2>
 <h3 id="header-27"><code>map(value, start1, stop1, start2, stop2)</code></h3>
 <p>Rimappa <code>value</code> dall'intervallo <code>[start1, stop1]</code> a <code>[start2, stop2]</code>.</p>
@@ -568,6 +767,11 @@ vel.<span class="hljs-title function_">add</span>(acc).<span class="hljs-title f
 <td>Accelerazione gravitazionale</td>
 </tr>
 <tr>
+<td><code>gravity</code></td>
+<td>getter/setter</td>
+<td>⭐ Imposta gravità (numero, Vector o Gravity)</td>
+</tr>
+<tr>
 <td><code>rotation</code></td>
 <td>number</td>
 <td>Rotazione in radianti</td>
@@ -629,10 +833,24 @@ player.<span class="hljs-title function_">flipV</span>(<span class="hljs-literal
 <p>Imposta la rotazione <strong>in gradi</strong> (internamente convertita in radianti).</p>
 <pre><code class="language-javascript hljs" data-highlighted="yes">player.<span class="hljs-title function_">rotate</span>(<span class="hljs-number">45</span>);
 </code></pre>
-<h4><code>addGravity(Vector)</code></h4>
-<p>Imposta la gravità applicata dall'utente (non applicata automaticamente — devi integrarla in <code>vel</code> nel tuo <code>draw()</code>).</p>
-<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> <span class="hljs-variable constant_">GRAVITY</span> = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vector</span>(<span class="hljs-number">0</span>, <span class="hljs-number">0.5</span>);
-player.<span class="hljs-title function_">addGravity</span>(<span class="hljs-variable constant_">GRAVITY</span>);
+<h4><code>gravity</code> (proprietà) + <code>update()</code> — ⭐ modo consigliato</h4>
+<p>Imposta la gravità con una sola riga e applica la fisica con <code>update()</code>:</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes">player.<span class="hljs-property">gravity</span> = <span class="hljs-number">0.5</span>;         <span class="hljs-comment">// cade</span>
+<span class="hljs-comment">// oppure</span>
+player.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">MOON</span>; <span class="hljs-comment">// cade piano</span>
+<span class="hljs-comment">// oppure</span>
+player.<span class="hljs-property">gravity</span> = -<span class="hljs-number">0.2</span>;         <span class="hljs-comment">// va in su</span>
+
+<span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
+    player.<span class="hljs-title function_">update</span>();   <span class="hljs-comment">// ← tutta la fisica qui</span>
+    player.<span class="hljs-title function_">draw</span>();
+}
+</code></pre>
+<p>Accetta <strong>numero</strong> (solo Y), <strong>Vector</strong> o <strong>Gravity</strong>. Vedi il <a href="#7c-gravita-semplificata">capitolo Gravità semplificata</a>.</p>
+<h4><code>addGravity(Vector)</code> — modo classico (retrocompatibile)</h4>
+<p>Imposta la gravità con un <code>Vector</code>. La fisica però <strong>non è automatica</strong>: devi integrarla tu in <code>vel</code>.</p>
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">const</span> <span class="hljs-variable constant_">GRAV</span> = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vector</span>(<span class="hljs-number">0</span>, <span class="hljs-number">0.5</span>);
+player.<span class="hljs-title function_">addGravity</span>(<span class="hljs-variable constant_">GRAV</span>);
 
 <span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
     player.<span class="hljs-property">vel</span>.<span class="hljs-title function_">add</span>(player.<span class="hljs-property">gravityVec</span>);
@@ -641,6 +859,9 @@ player.<span class="hljs-title function_">addGravity</span>(<span class="hljs-va
     player.<span class="hljs-title function_">draw</span>();
 }
 </code></pre>
+<blockquote>
+<p>💡 <code>addGravity</code> resta utile per chi vuole controllo totale sulla fisica. Per la maggior parte dei casi, <code>obj.gravity = 0.5; obj.update();</code> è più semplice.</p>
+</blockquote>
 <h4><code>collidesWith(otherSprite)</code></h4>
 <p>Collisione <strong>pixel-perfect</strong> se entrambi hanno maschera, altrimenti <strong>AABB</strong>.</p>
 <pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">if</span> (player.<span class="hljs-title function_">collidesWith</span>(nemico)) {
@@ -737,7 +958,7 @@ nemici = nemici.<span class="hljs-title function_">filter</span>(<span class="hl
 <td>✅</td>
 </tr>
 <tr>
-<td>Gravità</td>
+<td>Gravità (<code>.gravity</code> + <code>.update()</code>)</td>
 <td>✅</td>
 <td>✅</td>
 </tr>
@@ -786,8 +1007,16 @@ nemici = nemici.<span class="hljs-title function_">filter</span>(<span class="hl
 <td>Rotazione in gradi</td>
 </tr>
 <tr>
+<td><code>gravity = ...</code></td>
+<td>⭐ Imposta gravità (numero, Vector o Gravity)</td>
+</tr>
+<tr>
+<td><code>update()</code></td>
+<td>⭐ Applica gravità + movimento in un colpo</td>
+</tr>
+<tr>
 <td><code>addGravity(Vector)</code></td>
-<td>Imposta gravità</td>
+<td>Imposta gravità (metodo classico)</td>
 </tr>
 <tr>
 <td><code>collidesWith(other)</code></td>
@@ -856,8 +1085,16 @@ cuore.<span class="hljs-title function_">changeEmoji</span>(<span class="hljs-st
 <td>Disegna il rettangolo con <code>fill</code>/<code>stroke</code> correnti</td>
 </tr>
 <tr>
+<td><code>gravity = ...</code></td>
+<td>⭐ Imposta gravità (numero, Vector o Gravity)</td>
+</tr>
+<tr>
+<td><code>update()</code></td>
+<td>⭐ Applica gravità + movimento in un colpo</td>
+</tr>
+<tr>
 <td><code>addGravity(v)</code></td>
-<td>Imposta gravità</td>
+<td>Imposta gravità (metodo classico)</td>
 </tr>
 <tr>
 <td><code>collidesWith(other)</code></td>
@@ -909,7 +1146,7 @@ cuore.<span class="hljs-title function_">changeEmoji</span>(<span class="hljs-st
 </tr>
 </tbody></table>
 <h3 id="header-51">Metodi</h3>
-<p>Identici a <code>Rect</code>: <code>draw()</code>, <code>addGravity()</code>, <code>collidesWith()</code>, <code>isHovered()</code>, <code>isDragged()</code>, <code>markForDeletion()</code>.</p>
+<p>Identici a <code>Rect</code>: <code>draw()</code>, <code>gravity = ...</code>, <code>update()</code>, <code>addGravity()</code>, <code>collidesWith()</code>, <code>isHovered()</code>, <code>isDragged()</code>, <code>markForDeletion()</code>.</p>
 <blockquote>
 <p>⚠️ <strong>Differenza importante:</strong> a differenza di <code>Rect</code> e <code>Sprite</code>, in <code>Ellipse</code> il punto <code>(x, y)</code> è il <strong>centro</strong>. In <code>Rect</code> è l'angolo superiore sinistro.</p>
 </blockquote>
@@ -1213,13 +1450,14 @@ player.<span class="hljs-property">x</span> += <span class="hljs-number">10</spa
 </code></pre>
 <hr>
 <h3 id="header-71">🚀 Esempio 2: Player con gravità e piattaforme</h3>
-<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">let</span> player, piattaforme = [], gravita = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vector</span>(<span class="hljs-number">0</span>, <span class="hljs-number">0.6</span>);
+<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-keyword">let</span> player;
+<span class="hljs-keyword">let</span> piattaforme = [];
 
 <span class="hljs-keyword">function</span> <span class="hljs-title function_">setup</span>(<span class="hljs-params"></span>) {
     <span class="hljs-title function_">createMiniCanvas</span>(<span class="hljs-number">800</span>, <span class="hljs-number">600</span>);
 
     player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(<span class="hljs-number">400</span>, <span class="hljs-number">100</span>, <span class="hljs-number">40</span>, <span class="hljs-number">40</span>);
-    player.<span class="hljs-title function_">addGravity</span>(gravita);
+    player.<span class="hljs-property">gravity</span> = <span class="hljs-variable constant_">GRAVITY</span>.<span class="hljs-property">EARTH</span>;   <span class="hljs-comment">// ⭐ una riga!</span>
 
     piattaforme.<span class="hljs-title function_">push</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(<span class="hljs-number">0</span>, <span class="hljs-number">550</span>, <span class="hljs-number">800</span>, <span class="hljs-number">50</span>));
     piattaforme.<span class="hljs-title function_">push</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(<span class="hljs-number">200</span>, <span class="hljs-number">400</span>, <span class="hljs-number">150</span>, <span class="hljs-number">20</span>));
@@ -1229,19 +1467,18 @@ player.<span class="hljs-property">x</span> += <span class="hljs-number">10</spa
 <span class="hljs-keyword">function</span> <span class="hljs-title function_">draw</span>(<span class="hljs-params"></span>) {
     <span class="hljs-title function_">background</span>(<span class="hljs-string">'skyblue'</span>);
 
-    <span class="hljs-comment">// Fisica player</span>
-    player.<span class="hljs-property">vel</span>.<span class="hljs-title function_">add</span>(player.<span class="hljs-property">gravityVec</span>);
-    player.<span class="hljs-property">x</span> += player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span>;
-    player.<span class="hljs-property">y</span> += player.<span class="hljs-property">vel</span>.<span class="hljs-property">y</span>;
-
     <span class="hljs-comment">// Input</span>
-    <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowleft'</span>)) player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span> = -<span class="hljs-number">5</span>;
+    <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowleft'</span>))       player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span> = -<span class="hljs-number">5</span>;
     <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowright'</span>)) player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span> = <span class="hljs-number">5</span>;
-    <span class="hljs-keyword">else</span> player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span> = <span class="hljs-number">0</span>;
+    <span class="hljs-keyword">else</span>                              player.<span class="hljs-property">vel</span>.<span class="hljs-property">x</span> = <span class="hljs-number">0</span>;
 
-    <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowup'</span>) &amp;&amp; player.<span class="hljs-property">y</span> &gt;= <span class="hljs-number">550</span> - player.<span class="hljs-property">h</span> - <span class="hljs-number">1</span>) {
+    <span class="hljs-comment">// Salto (solo se tocca il suolo)</span>
+    <span class="hljs-keyword">if</span> (<span class="hljs-title function_">keyIsDown</span>(<span class="hljs-string">'arrowup'</span>) &amp;&amp; player.<span class="hljs-property">y</span> &gt;= <span class="hljs-number">500</span>) {
         player.<span class="hljs-property">vel</span>.<span class="hljs-property">y</span> = -<span class="hljs-number">12</span>;
     }
+
+    <span class="hljs-comment">// Fisica</span>
+    player.<span class="hljs-title function_">update</span>();
 
     <span class="hljs-comment">// Collisioni con piattaforme</span>
     <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> p <span class="hljs-keyword">of</span> piattaforme) {
@@ -1362,6 +1599,7 @@ player.<span class="hljs-property">x</span> += <span class="hljs-number">10</spa
 <h3 id="header-75">✅ Da fare</h3>
 <ul>
 <li><strong>Chiama <code>draw()</code> su ogni oggetto</strong> dentro il tuo <code>draw()</code> principale, dopo aver aggiornato la fisica.</li>
+<li>Usa <code>obj.gravity = ...; obj.update();</code> per la fisica semplice: è più leggibile e riduce gli errori.</li>
 <li>Usa <strong><code>markForDeletion()</code></strong> + filtro dell'array per rimuovere oggetti, invece di <code>delete</code>.</li>
 <li>Per <strong>molti oggetti</strong> (centinaia), evita <code>collidesWithGroup</code> con collisioni pixel-perfect: usa prima AABB.</li>
 <li>Usa <code>name</code> per pochi oggetti "speciali" (player, UI), <code>tag</code> per gruppi numerosi.</li>
@@ -1382,6 +1620,14 @@ player.<span class="hljs-property">x</span> += <span class="hljs-number">10</spa
 <tr>
 <td><code>eSprite.w</code></td>
 <td>È <code>0</code> finché non viene chiamato <code>draw()</code> la prima volta.</td>
+</tr>
+<tr>
+<td><code>update()</code></td>
+<td>Va chiamato <strong>una volta per frame</strong>. Se non lo chiami, l'oggetto non si muove.</td>
+</tr>
+<tr>
+<td><code>gravity</code> è copiata</td>
+<td>Assegnare un Vector/Gravity copia i valori. Se cambi l'oggetto originale dopo, l'oggetto non cambia.</td>
 </tr>
 <tr>
 <td>Drag &amp; Drop</td>
@@ -1414,6 +1660,7 @@ player.<span class="hljs-property">x</span> += <span class="hljs-number">10</spa
 <li><strong>Menu</strong>: combina <code>Button</code> + <code>frameCount</code> per fade-in.</li>
 <li><strong>Tilemap</strong>: array di <code>Rect</code> con collisioni AABB.</li>
 <li><strong>Debug UI</strong>: attiva <code>debugMode()</code> con un tasto (es. <code>'d'</code>).</li>
+<li><strong>Giochi con gravità</strong>: usa i preset <code>GRAVITY.EARTH</code> / <code>MOON</code> / <code>JUPITER</code> per rendere il codice auto-esplicativo.</li>
 </ul>
 <hr>
 <h2 id="header-78">📌 Riepilogo API — Cheat Sheet</h2>
@@ -1452,6 +1699,8 @@ mouseX, mouseY, mousePressed
 
 <span class="hljs-comment">// === OGGETTI ===</span>
 <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vector</span>(x, y)
+<span class="hljs-keyword">new</span> <span class="hljs-title class_">Gravity</span>(<span class="hljs-number">0.5</span>)              <span class="hljs-comment">// classe gravità</span>
+GRAVITY.EARTH <span class="hljs-comment">/ MOON / MARS / JUPITER / ZERO / UP / RIGHT / LEFT</span>
 <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(path, x, y, w, h, name?, tag?)
 <span class="hljs-keyword">new</span> <span class="hljs-title function_">eSprite</span>(emoji, x, y, size)
 <span class="hljs-keyword">new</span> <span class="hljs-title class_">Rect</span>(x, y, w, h)
@@ -1461,10 +1710,12 @@ mouseX, mouseY, mousePressed
 
 <span class="hljs-comment">// === METODI OGGETTI ===</span>
 obj.<span class="hljs-title function_">draw</span>()
+obj.<span class="hljs-property">gravity</span> = <span class="hljs-number">0.5</span>              <span class="hljs-comment">// ⭐ imposta gravità (number/Vector/Gravity)</span>
+obj.<span class="hljs-title function_">update</span>()                       <span class="hljs-comment">// ⭐ applica fisica (gravity + vel + pos)</span>
 obj.<span class="hljs-title function_">collidesWith</span>(other)
 obj.<span class="hljs-title function_">isHovered</span>()
 obj.<span class="hljs-title function_">isDragged</span>()
-obj.<span class="hljs-title function_">addGravity</span>(vector)
+obj.<span class="hljs-title function_">addGravity</span>(vector)             <span class="hljs-comment">// (modo classico, retrocompatibile)</span>
 obj.<span class="hljs-title function_">markForDeletion</span>()
 obj.<span class="hljs-title function_">flip</span>(bool) / obj.<span class="hljs-title function_">flipV</span>(bool)
 obj.<span class="hljs-title function_">rotate</span>(degrees)
@@ -1487,397 +1738,5 @@ esprite.<span class="hljs-title function_">changeEmoji</span>(str)
 <span class="hljs-keyword">function</span> <span class="hljs-title function_">keyReleased</span>(<span class="hljs-params">ev</span>) {}
 <span class="hljs-keyword">function</span> <span class="hljs-title function_">mouseClicked</span>(<span class="hljs-params">ev</span>) {}
 </code></pre>
-<hr>
-<h1 id="header-79">🔧 Bundler GUI per gamma-2d</h1>
-<p>Ecco la versione del bundler, con le seguenti caratteristiche e migliorie:</p>
-<h3 id="header-80">🆕 Modifiche principali</h3>
-<table>
-<thead>
-<tr>
-<th>Modifica</th>
-<th>Dettaglio</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>Auto-detect libreria</strong></td>
-<td>Cerca <code>gamma-2d.min.js</code>, se non esiste usa <code>gamma-2d.js</code> (come nel tuo caso)</td>
-</tr>
-<tr>
-<td><strong>Ordine HTML corretto</strong></td>
-<td>Libreria <strong>prima</strong> del codice gioco (così <code>Sprite</code>, <code>Rect</code>, ecc. sono disponibili anche a livello top)</td>
-</tr>
-<tr>
-<td><strong>Helper <code>getAsset()</code></strong></td>
-<td>Funzione inclusa nell'HTML generato per accedere agli asset in modo trasparente</td>
-</tr>
-<tr>
-<td><strong>Estensioni ampliate</strong></td>
-<td>Aggiunti <code>.gif</code>, <code>.webp</code>, <code>.bmp</code>, <code>.ogg</code>, <code>.m4a</code>, <code>.aac</code></td>
-</tr>
-<tr>
-<td><strong>Status migliorato</strong></td>
-<td>Mostra conteggio asset, dimensione output e percorso finale</td>
-</tr>
-<tr>
-<td><strong>Validazioni più chiare</strong></td>
-<td>Messaggi d'errore espliciti se la libreria non viene trovata</td>
-</tr>
-<tr>
-<td><strong>UI più informativa</strong></td>
-<td>Conteggio asset in tempo reale, indicatore presenza libreria, bottone disabilitato durante build</td>
-</tr>
-</tbody></table>
-<h3 id="header-81">📄 <code>bundler_gui.py</code></h3>
-<pre><code class="language-python hljs" data-highlighted="yes"><span class="hljs-keyword">import</span> tkinter <span class="hljs-keyword">as</span> tk
-<span class="hljs-keyword">from</span> tkinter <span class="hljs-keyword">import</span> filedialog, messagebox, ttk
-<span class="hljs-keyword">import</span> os
-<span class="hljs-keyword">import</span> base64
-<span class="hljs-keyword">import</span> mimetypes
-<span class="hljs-keyword">import</span> pathlib
-<span class="hljs-keyword">import</span> sys
-
-
-<span class="hljs-comment"># --- FUNZIONE PER GESTIRE I PERCORSI IN PYTHON E PYINSTALLER ---</span>
-<span class="hljs-keyword">def</span> <span class="hljs-title function_">get_base_dir</span>():
-    <span class="hljs-string">"""Restituisce la directory base dell'applicazione (script o eseguibile)."""</span>
-    <span class="hljs-keyword">if</span> <span class="hljs-built_in">getattr</span>(sys, <span class="hljs-string">'frozen'</span>, <span class="hljs-literal">False</span>):
-        <span class="hljs-keyword">return</span> pathlib.Path(sys.executable).parent
-    <span class="hljs-keyword">return</span> pathlib.Path(__file__).parent
-
-
-<span class="hljs-comment"># --- CONFIGURAZIONE ---</span>
-CURRENT_DIR = get_base_dir()
-
-
-<span class="hljs-keyword">def</span> <span class="hljs-title function_">find_minilib</span>():
-    <span class="hljs-string">"""Cerca la libreria gamma-2d, preferendo la versione minificata."""</span>
-    candidates = [<span class="hljs-string">'gamma-2d.min.js'</span>, <span class="hljs-string">'gamma-2d.js'</span>]
-    <span class="hljs-keyword">for</span> name <span class="hljs-keyword">in</span> candidates:
-        path = CURRENT_DIR / name
-        <span class="hljs-keyword">if</span> path.exists():
-            <span class="hljs-keyword">return</span> path
-    <span class="hljs-comment"># Fallback per il messaggio d'errore</span>
-    <span class="hljs-keyword">return</span> CURRENT_DIR / <span class="hljs-string">'gamma-2d.js'</span>
-
-
-MINILIB_FILE = find_minilib()
-ASSETS_DIR = CURRENT_DIR / <span class="hljs-string">'assets'</span>
-
-<span class="hljs-comment"># Estensioni supportate (allineate con la libreria gamma-2d)</span>
-IMAGE_EXTS = (<span class="hljs-string">'.png'</span>, <span class="hljs-string">'.jpg'</span>, <span class="hljs-string">'.jpeg'</span>, <span class="hljs-string">'.gif'</span>, <span class="hljs-string">'.webp'</span>, <span class="hljs-string">'.bmp'</span>, <span class="hljs-string">'.svg'</span>)
-AUDIO_EXTS = (<span class="hljs-string">'.mp3'</span>, <span class="hljs-string">'.wav'</span>, <span class="hljs-string">'.ogg'</span>, <span class="hljs-string">'.m4a'</span>, <span class="hljs-string">'.aac'</span>)
-ALL_EXTS = IMAGE_EXTS + AUDIO_EXTS
-
-
-<span class="hljs-keyword">class</span> <span class="hljs-title class_">BundlerApp</span>:
-    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, master</span>):
-        self.master = master
-        master.title(<span class="hljs-string">"gamma-2d Bundler GUI"</span>)
-        master.resizable(<span class="hljs-literal">False</span>, <span class="hljs-literal">False</span>)
-
-        self.game_file_path = <span class="hljs-string">""</span>
-        self.minilib_path = MINILIB_FILE
-        self.assets_dir = ASSETS_DIR
-
-        <span class="hljs-comment"># --- Stili ---</span>
-        style = ttk.Style()
-        style.configure(<span class="hljs-string">'TFrame'</span>, padding=<span class="hljs-number">10</span>)
-        style.configure(<span class="hljs-string">'TLabel'</span>, padding=<span class="hljs-number">5</span>)
-        style.configure(<span class="hljs-string">'TButton'</span>, padding=<span class="hljs-number">10</span>)
-        style.configure(<span class="hljs-string">'Header.TLabel'</span>, font=(<span class="hljs-string">'Helvetica'</span>, <span class="hljs-number">14</span>, <span class="hljs-string">'bold'</span>))
-
-        main_frame = ttk.Frame(master, padding=<span class="hljs-string">"15 15 15 15"</span>)
-        main_frame.pack()
-
-        <span class="hljs-comment"># --- Titolo ---</span>
-        ttk.Label(
-            main_frame,
-            text=<span class="hljs-string">"gamma-2d Standalone Creator"</span>,
-            style=<span class="hljs-string">'Header.TLabel'</span>
-        ).grid(row=<span class="hljs-number">0</span>, column=<span class="hljs-number">0</span>, columnspan=<span class="hljs-number">3</span>, pady=<span class="hljs-number">10</span>)
-
-        <span class="hljs-comment"># --- 1. File JS del gioco ---</span>
-        ttk.Label(main_frame, text=<span class="hljs-string">"File JavaScript del Gioco (.js):"</span>).grid(row=<span class="hljs-number">1</span>, column=<span class="hljs-number">0</span>, sticky=<span class="hljs-string">"w"</span>)
-        self.game_path_entry = ttk.Entry(main_frame, width=<span class="hljs-number">40</span>)
-        self.game_path_entry.grid(row=<span class="hljs-number">1</span>, column=<span class="hljs-number">1</span>, padx=<span class="hljs-number">5</span>, pady=<span class="hljs-number">5</span>)
-        ttk.Button(main_frame, text=<span class="hljs-string">"Sfoglia"</span>, command=self.select_game_file).grid(row=<span class="hljs-number">1</span>, column=<span class="hljs-number">2</span>)
-
-        <span class="hljs-comment"># --- 2. Nome output HTML ---</span>
-        ttk.Label(main_frame, text=<span class="hljs-string">"Nome File Standalone (.html):"</span>).grid(row=<span class="hljs-number">2</span>, column=<span class="hljs-number">0</span>, sticky=<span class="hljs-string">"w"</span>)
-        self.output_name_entry = ttk.Entry(main_frame, width=<span class="hljs-number">40</span>)
-        self.output_name_entry.insert(<span class="hljs-number">0</span>, <span class="hljs-string">"gioco_standalone.html"</span>)
-        self.output_name_entry.grid(row=<span class="hljs-number">2</span>, column=<span class="hljs-number">1</span>, padx=<span class="hljs-number">5</span>, pady=<span class="hljs-number">5</span>)
-
-        <span class="hljs-comment"># --- 3. Libreria (display con indicatore) ---</span>
-        ttk.Label(main_frame, text=<span class="hljs-string">"Libreria gamma-2d:"</span>).grid(row=<span class="hljs-number">3</span>, column=<span class="hljs-number">0</span>, sticky=<span class="hljs-string">"w"</span>)
-        lib_status = <span class="hljs-string">"✅"</span> <span class="hljs-keyword">if</span> self.minilib_path.exists() <span class="hljs-keyword">else</span> <span class="hljs-string">"❌ (non trovata)"</span>
-        ttk.Label(
-            main_frame,
-            text=<span class="hljs-string">f"<span class="hljs-subst">{lib_status}</span>  <span class="hljs-subst">{self.minilib_path.name}</span>"</span>
-        ).grid(row=<span class="hljs-number">3</span>, column=<span class="hljs-number">1</span>, sticky=<span class="hljs-string">"w"</span>)
-        ttk.Label(
-            main_frame,
-            text=<span class="hljs-string">f"in: <span class="hljs-subst">{self.minilib_path.parent.name}</span>/"</span>,
-            foreground=<span class="hljs-string">"gray"</span>
-        ).grid(row=<span class="hljs-number">3</span>, column=<span class="hljs-number">2</span>, sticky=<span class="hljs-string">"w"</span>)
-
-        <span class="hljs-comment"># --- 4. Assets (display con conteggio) ---</span>
-        ttk.Label(main_frame, text=<span class="hljs-string">"Cartella Assets:"</span>).grid(row=<span class="hljs-number">4</span>, column=<span class="hljs-number">0</span>, sticky=<span class="hljs-string">"w"</span>)
-        ttk.Label(
-            main_frame,
-            text=<span class="hljs-string">f"📁 <span class="hljs-subst">{self.assets_dir.name}</span>/"</span>
-        ).grid(row=<span class="hljs-number">4</span>, column=<span class="hljs-number">1</span>, sticky=<span class="hljs-string">"w"</span>)
-        self.assets_count_label = ttk.Label(main_frame, text=self._get_assets_summary())
-        self.assets_count_label.grid(row=<span class="hljs-number">4</span>, column=<span class="hljs-number">2</span>, sticky=<span class="hljs-string">"w"</span>)
-
-        <span class="hljs-comment"># --- 5. Bottone principale ---</span>
-        self.bundle_button = ttk.Button(
-            main_frame,
-            text=<span class="hljs-string">"🚀 Crea File Standalone"</span>,
-            command=self.run_bundling
-        )
-        self.bundle_button.grid(row=<span class="hljs-number">5</span>, column=<span class="hljs-number">0</span>, columnspan=<span class="hljs-number">3</span>, pady=<span class="hljs-number">20</span>)
-
-        <span class="hljs-comment"># --- 6. Status ---</span>
-        self.status_label = ttk.Label(main_frame, text=<span class="hljs-string">""</span>, foreground=<span class="hljs-string">"blue"</span>)
-        self.status_label.grid(row=<span class="hljs-number">6</span>, column=<span class="hljs-number">0</span>, columnspan=<span class="hljs-number">3</span>, pady=<span class="hljs-number">5</span>)
-
-    <span class="hljs-comment"># ------------------------------------------------------------</span>
-    <span class="hljs-comment"># HELPERS UI</span>
-    <span class="hljs-comment"># ------------------------------------------------------------</span>
-    <span class="hljs-keyword">def</span> <span class="hljs-title function_">_get_assets_summary</span>(<span class="hljs-params">self</span>):
-        <span class="hljs-string">"""Ritorna una stringa con il conteggio degli asset trovati."""</span>
-        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> self.assets_dir.exists():
-            <span class="hljs-keyword">return</span> <span class="hljs-string">"(cartella non trovata)"</span>
-        count = <span class="hljs-built_in">sum</span>(
-            <span class="hljs-number">1</span> <span class="hljs-keyword">for</span> f <span class="hljs-keyword">in</span> self.assets_dir.iterdir()
-            <span class="hljs-keyword">if</span> f.is_file() <span class="hljs-keyword">and</span> f.suffix.lower() <span class="hljs-keyword">in</span> ALL_EXTS
-        )
-        <span class="hljs-keyword">return</span> <span class="hljs-string">f"(<span class="hljs-subst">{count}</span> file trovati)"</span> <span class="hljs-keyword">if</span> count &gt; <span class="hljs-number">0</span> <span class="hljs-keyword">else</span> <span class="hljs-string">"(vuota)"</span>
-
-    <span class="hljs-keyword">def</span> <span class="hljs-title function_">select_game_file</span>(<span class="hljs-params">self</span>):
-        <span class="hljs-string">"""Dialog per selezionare il file JS del gioco."""</span>
-        filetypes = (
-            (<span class="hljs-string">'JavaScript files'</span>, <span class="hljs-string">'*.js'</span>),
-            (<span class="hljs-string">'All files'</span>, <span class="hljs-string">'*.*'</span>)
-        )
-        self.game_file_path = filedialog.askopenfilename(
-            initialdir=CURRENT_DIR,
-            title=<span class="hljs-string">"Seleziona il codice del gioco"</span>,
-            filetypes=filetypes
-        )
-        <span class="hljs-keyword">if</span> self.game_file_path:
-            self.game_path_entry.delete(<span class="hljs-number">0</span>, tk.END)
-            self.game_path_entry.insert(<span class="hljs-number">0</span>, self.game_file_path)
-
-    <span class="hljs-comment"># ------------------------------------------------------------</span>
-    <span class="hljs-comment"># CONVERSIONE ASSET IN BASE64</span>
-    <span class="hljs-comment"># ------------------------------------------------------------</span>
-    <span class="hljs-keyword">def</span> <span class="hljs-title function_">file_to_base64</span>(<span class="hljs-params">self, file_path</span>):
-        <span class="hljs-string">"""Converte un file in stringa Base64 con MIME type corretto."""</span>
-        mime_type, _ = mimetypes.guess_type(<span class="hljs-built_in">str</span>(file_path))
-        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> mime_type:
-            ext = pathlib.Path(file_path).suffix.lower()
-            fallbacks = {
-                <span class="hljs-string">'.mp3'</span>: <span class="hljs-string">'audio/mpeg'</span>,
-                <span class="hljs-string">'.wav'</span>: <span class="hljs-string">'audio/wav'</span>,
-                <span class="hljs-string">'.ogg'</span>: <span class="hljs-string">'audio/ogg'</span>,
-                <span class="hljs-string">'.m4a'</span>: <span class="hljs-string">'audio/mp4'</span>,
-                <span class="hljs-string">'.aac'</span>: <span class="hljs-string">'audio/aac'</span>,
-                <span class="hljs-string">'.svg'</span>: <span class="hljs-string">'image/svg+xml'</span>,
-                <span class="hljs-string">'.webp'</span>: <span class="hljs-string">'image/webp'</span>,
-            }
-            mime_type = fallbacks.get(ext, <span class="hljs-string">'application/octet-stream'</span>)
-
-        <span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(file_path, <span class="hljs-string">'rb'</span>) <span class="hljs-keyword">as</span> f:
-            data = base64.b64encode(f.read()).decode(<span class="hljs-string">'utf-8'</span>)
-
-        <span class="hljs-keyword">return</span> <span class="hljs-string">f'data:<span class="hljs-subst">{mime_type}</span>;base64,<span class="hljs-subst">{data}</span>'</span>
-
-    <span class="hljs-comment"># ------------------------------------------------------------</span>
-    <span class="hljs-comment"># BUNDLING</span>
-    <span class="hljs-comment"># ------------------------------------------------------------</span>
-    <span class="hljs-keyword">def</span> <span class="hljs-title function_">run_bundling</span>(<span class="hljs-params">self</span>):
-        <span class="hljs-string">"""Esegue il bundling al click del bottone."""</span>
-        game_file_path = self.game_path_entry.get().strip()
-        output_file_name = self.output_name_entry.get().strip()
-
-        <span class="hljs-comment"># --- Validazione ---</span>
-        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> game_file_path <span class="hljs-keyword">or</span> <span class="hljs-keyword">not</span> os.path.exists(game_file_path):
-            messagebox.showerror(<span class="hljs-string">"Errore"</span>, <span class="hljs-string">"Seleziona un file JavaScript valido."</span>)
-            <span class="hljs-keyword">return</span>
-
-        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> output_file_name:
-            messagebox.showerror(<span class="hljs-string">"Errore"</span>, <span class="hljs-string">"Inserisci un nome per il file di output."</span>)
-            <span class="hljs-keyword">return</span>
-
-        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> output_file_name.lower().endswith(<span class="hljs-string">'.html'</span>):
-            messagebox.showerror(<span class="hljs-string">"Errore"</span>, <span class="hljs-string">"Il nome del file di output deve terminare con .html"</span>)
-            <span class="hljs-keyword">return</span>
-
-        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> self.minilib_path.exists():
-            messagebox.showerror(
-                <span class="hljs-string">"Errore"</span>,
-                <span class="hljs-string">f"Libreria gamma-2d non trovata!\n\n"</span>
-                <span class="hljs-string">f"Cartella cercata:\n<span class="hljs-subst">{self.minilib_path.parent}</span>\n\n"</span>
-                <span class="hljs-string">f"Nomi accettati:\n"</span>
-                <span class="hljs-string">f"  • gamma-2d.js\n"</span>
-                <span class="hljs-string">f"  • gamma-2d.min.js\n\n"</span>
-                <span class="hljs-string">f"Assicurati che uno dei due file sia presente nella stessa cartella del bundler."</span>
-            )
-            <span class="hljs-keyword">return</span>
-
-        self.status_label.config(text=<span class="hljs-string">"⏳ Creazione in corso..."</span>, foreground=<span class="hljs-string">"orange"</span>)
-        self.bundle_button.config(state=<span class="hljs-string">'disabled'</span>)
-        self.master.update()
-
-        <span class="hljs-keyword">try</span>:
-            <span class="hljs-comment"># --- 1. Carica libreria e codice gioco ---</span>
-            minilib_code = self.minilib_path.read_text(encoding=<span class="hljs-string">'utf-8'</span>)
-            game_code = pathlib.Path(game_file_path).read_text(encoding=<span class="hljs-string">'utf-8'</span>)
-
-            <span class="hljs-comment"># --- 2. Processa assets ---</span>
-            base64_definitions = <span class="hljs-string">'const ASSETS = {};\n'</span>
-            asset_count = <span class="hljs-number">0</span>
-
-            <span class="hljs-keyword">if</span> self.assets_dir.exists():
-                asset_files = <span class="hljs-built_in">sorted</span>(
-                    [f <span class="hljs-keyword">for</span> f <span class="hljs-keyword">in</span> self.assets_dir.iterdir()
-                     <span class="hljs-keyword">if</span> f.is_file() <span class="hljs-keyword">and</span> f.suffix.lower() <span class="hljs-keyword">in</span> ALL_EXTS],
-                    key=<span class="hljs-keyword">lambda</span> f: f.name.lower()
-                )
-
-                <span class="hljs-keyword">for</span> asset_path <span class="hljs-keyword">in</span> asset_files:
-                    base64_string = self.file_to_base64(asset_path)
-                    <span class="hljs-comment"># Chiave = nome file (es. 'player.png')</span>
-                    base64_definitions += <span class="hljs-string">f"ASSETS['<span class="hljs-subst">{asset_path.name}</span>'] = '<span class="hljs-subst">{base64_string}</span>';\n"</span>
-                    asset_count += <span class="hljs-number">1</span>
-
-            <span class="hljs-comment"># --- 3. Template HTML ---</span>
-            <span class="hljs-comment"># Ordine: ASSETS → LIBRERIA → CODICE GIOCO</span>
-            <span class="hljs-comment"># (così Sprite/Sound/eSprite sono definiti anche a livello top del game code)</span>
-            html_template = <span class="hljs-string">f"""&lt;!DOCTYPE html&gt;
-&lt;html lang="it"&gt;
-&lt;head&gt;
-    &lt;meta charset="utf-8"&gt;
-    &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
-    &lt;title&gt;<span class="hljs-subst">{output_file_name[:-<span class="hljs-number">5</span>]}</span>&lt;/title&gt;
-    &lt;style&gt;
-        body {{
-            margin: 0;
-            background: #1a1a1a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: sans-serif;
-        }}
-        canvas {{
-            box-shadow: 0 0 24px rgba(0,0,0,0.6);
-            border-radius: 4px;
-        }}
-    &lt;/style&gt;
-&lt;/head&gt;
-&lt;body&gt;
-&lt;script&gt;
-// ============================================================
-// 1) ASSETS EMBEDDED (Base64)
-// ============================================================
-// Ogni file è disponibile come ASSETS['nomefile.ext']
-//
-// Esempi d'uso nel codice del gioco:
-//   new Sprite(ASSETS['player.png'], 100, 100, 32, 32)
-//   new Sound(ASSETS['boom.wav'])
-//   background(ASSETS['sfondo.png'])
-//
-// Oppure usa l'helper getAsset() che tollera path tipo 'assets/player.png':
-//   new Sprite(getAsset('assets/player.png'), 100, 100, 32, 32)
-<span class="hljs-subst">{base64_definitions}</span>
-
-function getAsset(path) {{
-    if (!path || typeof path !== 'string') return path;
-    if (path.startsWith('data:')) return path;
-    const name = path.split('/').pop();
-    return ASSETS[name] || path;
-}}
-
-// ============================================================
-// 2) GAMMA-2D LIBRARY
-// ============================================================
-<span class="hljs-subst">{minilib_code}</span>
-
-// ============================================================
-// 3) CODICE DEL GIOCO
-// ============================================================
-<span class="hljs-subst">{game_code}</span>
-&lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;
-"""</span>
-
-            <span class="hljs-comment"># --- 4. Scrivi file ---</span>
-            output_path = CURRENT_DIR / output_file_name
-            output_path.write_text(html_template.strip(), encoding=<span class="hljs-string">'utf-8'</span>)
-
-            size_kb = output_path.stat().st_size / <span class="hljs-number">1024</span>
-            self.assets_count_label.config(text=self._get_assets_summary())
-
-            self.status_label.config(
-                text=<span class="hljs-string">f"✅ Creato: <span class="hljs-subst">{output_file_name}</span>  •  <span class="hljs-subst">{asset_count}</span> asset  •  <span class="hljs-subst">{size_kb:<span class="hljs-number">.1</span>f}</span> KB"</span>,
-                foreground=<span class="hljs-string">"green"</span>
-            )
-
-            messagebox.showinfo(
-                <span class="hljs-string">"Successo!"</span>,
-                <span class="hljs-string">f"File standalone creato con successo!\n\n"</span>
-                <span class="hljs-string">f"📁 Percorso:\n<span class="hljs-subst">{output_path}</span>\n\n"</span>
-                <span class="hljs-string">f"📦 Asset incorporati: <span class="hljs-subst">{asset_count}</span>\n"</span>
-                <span class="hljs-string">f"💾 Dimensione: <span class="hljs-subst">{size_kb:<span class="hljs-number">.1</span>f}</span> KB"</span>
-            )
-
-        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:
-            self.status_label.config(
-                text=<span class="hljs-string">"❌ ERRORE: controlla il messaggio"</span>,
-                foreground=<span class="hljs-string">"red"</span>
-            )
-            messagebox.showerror(
-                <span class="hljs-string">"Errore Bundling"</span>,
-                <span class="hljs-string">f"Si è verificato un errore durante l'elaborazione:\n\n<span class="hljs-subst">{e}</span>"</span>
-            )
-        <span class="hljs-keyword">finally</span>:
-            self.bundle_button.config(state=<span class="hljs-string">'normal'</span>)
-
-
-<span class="hljs-comment"># --- Avvio ---</span>
-<span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">"__main__"</span>:
-    root = tk.Tk()
-    app = BundlerApp(root)
-    root.mainloop()
-</code></pre>
-<hr>
-<h3 id="header-82">📌 Cosa fare nel tuo codice di gioco</h3>
-<p>Per sfruttare il bundler, nel gioco scrivi gli asset così:</p>
-<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-comment">// ✅ Corretto (funziona in dev E nel file standalone)</span>
-<span class="hljs-keyword">const</span> player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(<span class="hljs-variable constant_">ASSETS</span>[<span class="hljs-string">'player.png'</span>], <span class="hljs-number">100</span>, <span class="hljs-number">100</span>, <span class="hljs-number">32</span>, <span class="hljs-number">32</span>);
-<span class="hljs-keyword">const</span> boom = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sound</span>(<span class="hljs-variable constant_">ASSETS</span>[<span class="hljs-string">'boom.wav'</span>]);
-<span class="hljs-title function_">background</span>(<span class="hljs-variable constant_">ASSETS</span>[<span class="hljs-string">'sfondo.png'</span>]);
-
-<span class="hljs-comment">// ✅ Alternativa con helper (tollera path tipo 'assets/player.png')</span>
-<span class="hljs-keyword">const</span> player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(<span class="hljs-title function_">getAsset</span>(<span class="hljs-string">'assets/player.png'</span>), <span class="hljs-number">100</span>, <span class="hljs-number">100</span>, <span class="hljs-number">32</span>, <span class="hljs-number">32</span>);
-</code></pre>
-<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-comment">// ❌ Da evitare (nel file standalone il path relativo non esisterà)</span>
-<span class="hljs-keyword">const</span> player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(<span class="hljs-string">'assets/player.png'</span>, <span class="hljs-number">100</span>, <span class="hljs-number">100</span>, <span class="hljs-number">32</span>, <span class="hljs-number">32</span>);
-</code></pre>
-<h3 id="header-83">🔄 Flusso consigliato (dev ↔ build)</h3>
-<p>Nel tuo <code>game.js</code>, puoi mantenere compatibilità con entrambe le modalità:</p>
-<pre><code class="language-javascript hljs" data-highlighted="yes"><span class="hljs-comment">// Fallback in dev se ASSETS non esiste</span>
-<span class="hljs-keyword">const</span> A = (<span class="hljs-keyword">typeof</span> <span class="hljs-variable constant_">ASSETS</span> !== <span class="hljs-string">'undefined'</span>) ? <span class="hljs-variable constant_">ASSETS</span> : {
-    <span class="hljs-string">'player.png'</span>: <span class="hljs-string">'assets/player.png'</span>,
-    <span class="hljs-string">'boom.wav'</span>:   <span class="hljs-string">'assets/boom.wav'</span>,
-};
-
-<span class="hljs-keyword">const</span> player = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Sprite</span>(A[<span class="hljs-string">'player.png'</span>], <span class="hljs-number">100</span>, <span class="hljs-number">100</span>, <span class="hljs-number">32</span>, <span class="hljs-number">32</span>);
-</code></pre>
-<p>Così apri <code>index.html</code> in dev con la cartella <code>assets/</code> reale, e usi il bundler per distribuire un <strong>singolo file</strong> senza dipendenze esterne. 🎉</p>
 </body>
 </html>

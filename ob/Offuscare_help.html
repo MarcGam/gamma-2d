@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Export Markdown</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<style>:root {
+  --bg-main: #f8f9fa;
+  --bg-panel: #ffffff;
+  --bg-toolbar: #ffffff;
+  --border-color: #e0e4e8;
+  --text-main: #2c3e50;
+  --text-muted: #6c757d;
+  --accent: #4a90e2;
+  --accent-hover: #357abd;
+  --danger: #e74c3c;
+  --radius: 8px;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg-panel);
+  color: var(--text-main);
+  max-width: 860px;
+  margin: 40px auto;
+  padding: 0 24px 60px;
+  line-height: 1.7;
+}
+
+#preview-panel { flex: 1 1 0%; min-width: 0px; }
+body { flex: 1 1 0%; overflow-y: auto; padding: 40px; line-height: 1.7; scroll-behavior: smooth; }
+h1, h2, h3 { margin-top: 1.5em; margin-bottom: 0.5em; font-weight: 700; }
+h1 { font-size: 2.2em; border-bottom: 2px solid #e0e4e8; padding-bottom: 10px; }
+h2 { font-size: 1.6em; border-bottom: 1px solid #e0e4e8; padding-bottom: 5px; }
+p { margin-bottom: 1em; }
+a { color: #4a90e2; text-decoration: none; }
+code { background: #f8f9fa; padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 0.9em; border: 1px solid #e0e4e8; }
+pre { background: rgb(246, 248, 250); padding: 16px; border-radius: 8px; overflow-x: auto; margin-bottom: 1em; border: 1px solid #e0e4e8; }
+pre code { background: transparent; border: medium; padding: 0px; }
+blockquote { border-left: 4px solid #4a90e2; padding: 0px 15px; color: #6c757d; margin: 0px 0px 1em; font-style: italic; }
+table { border-collapse: collapse; width: 100%; margin-bottom: 1em; }
+th, td { border: 1px solid #e0e4e8; padding: 8px 12px; }
+th { background: #f8f9fa; }
+img { max-width: 100%; border-radius: 8px; }
+.view-editor-only #preview-panel, .view-editor-only .resizer { display: none; }
+
+/* Fallback espliciti: assicurano i bordi delle tabelle anche se l'estrazione
+   delle regole #preview dovesse in futuro cambiare selettori o ordine. */
+table { border-collapse: collapse; border-spacing: 0; }
+th, td { border: 1px solid #e0e4e8; padding: 8px 12px; }
+th { background: #f8f9fa; }
+
+/* Forza la stampa di colori e bordi (altrimenti alcuni browser attenuano
+   i colori chiari durante la stampa / esportazione PDF) */
+* {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Margini pagina puliti per PDF / stampa */
+@page { margin: 12mm; }
+
+/* Override specifici per la stampa: bordi più scuri per essere sempre visibili
+   su carta bianca, indipendentemente dal tema attivo. */
+@media print {
+  body { margin: 0; padding: 0; }
+  th, td { border: 1px solid #666 !important; }
+  th { background: #f5f5f5 !important; }
+  pre, blockquote, table { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body><p>La premessa da fare è onesta: <strong>un file JavaScript eseguito nel browser non può essere offuscato al 100% in modo irreversibile.</strong> Per definizione, il browser deve poterlo decifrare ed eseguire, quindi un attaccante determinato potrà sempre, prima o poi, risalire alla logica. Quello che puoi fare è <strong>alzare così tanto il costo dell'attacco</strong> da rendere il reverse engineering non conveniente.</p>
+<p>Il tuo <code>gamma-2d_ob.js</code> attuale è offuscato con tecniche di base (probabilmente <code>javascript-obfuscator</code> con opzioni non massimali). Ecco i livelli successivi, dal più semplice al più robusto.</p>
+<hr>
+<h3 id="header-0">📊 I livelli di protezione (dal più debole al più forte)</h3>
+<table>
+<thead>
+<tr>
+<th>Livello</th>
+<th>Tecnologia</th>
+<th>Cosa fa</th>
+<th>Resistenza al reverse engineering</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Minificazione</td>
+<td>Rimuove spazi e rinomina</td>
+<td>⭐ (banale)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Offuscamento base (attuale)</td>
+<td>Stringhe in array, rinomina variabili</td>
+<td>⭐⭐ (bassa)</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Offuscamento avanzato</strong></td>
+<td>Control Flow Flattening, anti-debug, self-defending</td>
+<td>⭐⭐⭐⭐ (alta)</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>VM-based Obfuscation</strong></td>
+<td>Bytecode cifrato in VM custom</td>
+<td>⭐⭐⭐⭐⭐ (molto alta)</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>WebAssembly</strong></td>
+<td>Compilazione in binario Wasm</td>
+<td>⭐⭐⭐⭐⭐ (molto alta, ma complessa)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Soluzioni commerciali</td>
+<td>Crittografia + licensing + anti-tamper professionale</td>
+<td>⭐⭐⭐⭐⭐⭐ (massima, a pagamento)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3 id="header-1">🛠️ Livello 3 — <code>javascript-obfuscator</code> con preset "massima protezione"</h3>
+<p>È il tool open-source più diffuso (1M+ download/settimana). La differenza tra il tuo file attuale e una versione davvero robusta sta nella <strong>configurazione</strong>. Ecco un preset "max" da usare:</p>
+<pre><code class="language-bash hljs" data-highlighted="yes">npx javascript-obfuscator gamma-2d.js --output gamma-2d_ob.js \
+  --compact <span class="hljs-literal">true</span> \
+  --control-flow-flattening <span class="hljs-literal">true</span> \
+  --control-flow-flattening-threshold 1 \
+  --dead-code-injection <span class="hljs-literal">true</span> \
+  --dead-code-injection-threshold 0.4 \
+  --debug-protection <span class="hljs-literal">true</span> \
+  --debug-protection-interval 4000 \
+  --self-defending <span class="hljs-literal">true</span> \
+  --string-array <span class="hljs-literal">true</span> \
+  --string-array-encoding rc4 \
+  --string-array-rotate <span class="hljs-literal">true</span> \
+  --string-array-shuffle <span class="hljs-literal">true</span> \
+  --string-array-wrappers-type variable \
+  --split-strings <span class="hljs-literal">true</span> \
+  --split-strings-chunk-length 8 \
+  --numbers-to-expressions <span class="hljs-literal">true</span> \
+  --identifier-names-generator hexadecimal \
+  --rename-globals <span class="hljs-literal">false</span>
+</code></pre>
+<p><strong>Cosa attivano le opzioni chiave:</strong></p>
+<ul>
+<li><strong><code>controlFlowFlatteningThreshold: 1</code></strong>: trasforma la struttura del codice in una macchina a stati con <code>switch</code>, rendendo il flusso logico quasi illeggibile.</li>
+<li><strong><code>debugProtection</code> + <code>selfDefending</code></strong>: se qualcuno apre i DevTools o prova a "beautificare" il codice, l'esecuzione si blocca o si rompe.</li>
+<li><strong><code>stringArrayEncoding: 'rc4'</code></strong>: le stringhe non sono in chiaro ma cifrate con RC4 e decifrate a runtime.</li>
+<li><strong><code>deadCodeInjection</code></strong>: inserisce rami di codice mai eseguiti che confondono l'analisi statica.</li>
+</ul>
+<blockquote>
+<p>⚠️ <strong>Attenzione alle performance</strong>: <code>controlFlowFlattening</code> può rallentare l'esecuzione fino a <strong>1.5x</strong>. Per una libreria come gamma-2d (che gira a 60 FPS) testa bene prima di distribuire.</p>
+</blockquote>
+<hr>
+<h3 id="header-2">🧠 Livello 4 — VM-based Obfuscation (il salto di qualità)</h3>
+<p>Qui il codice JavaScript <strong>non viene più offuscato: viene compilato in bytecode</strong> che gira dentro una macchina virtuale custom embedded nel file. Il risultato non è più "JavaScript offuscato", ma un <strong>programma per una VM</strong> che solo quella VM sa eseguire.</p>
+<p><strong>Tool open-source/accessibili:</strong></p>
+<ul>
+<li><p><strong><code>vm-obfuscator-pro</code></strong> (npm): compila JS in bytecode cifrato con opcode dinamici, decoy, anti-debug a 7 vettori, e ha un preset <code>max</code> che attiva tutto. Comando:</p>
+<pre><code class="language-bash hljs" data-highlighted="yes">npx vmobf gamma-2d.js -o gamma-2d_ob.js --preset max
+</code></pre>
+</li>
+<li><p><strong><code>Obfuscator.io Pro</code></strong> (a pagamento, API): la versione Pro di <code>javascript-obfuscator</code> aggiunge proprio la VM obfuscation con bytecode encryption e difese anti-LLM.</p>
+</li>
+</ul>
+<p>Questo è il livello massimo raggiungibile <strong>rimanendo su JavaScript puro</strong>. Il codice prodotto è molto più grande (spesso 3-5x) e più lento, ma il reverse engineering richiede competenze e tempo significativi.</p>
+<hr>
+<h3 id="header-3">🧱 Livello 5 — WebAssembly (il vero "scatola nera")</h3>
+<p>Se vuoi la massima protezione possibile senza soluzioni commerciali, la strada è <strong>compilare la logica critica in WebAssembly</strong>. Il binario Wasm non contiene nomi di variabili, commenti o struttura leggibile: è codice macchina per una VM stack-based.</p>
+<p><strong>Come si fa in pratica:</strong></p>
+<ol>
+<li>Riscrivi la parte sensibile della libreria in <strong>AssemblyScript</strong> (un TypeScript-like che compila in Wasm) o in C/Rust.</li>
+<li>Compila in <code>.wasm</code>.</li>
+<li>Incorpora il <code>.wasm</code> come base64 nell'HTML e caricalo con <code>WebAssembly.instantiate()</code>.</li>
+<li>La logica offuscata non è più JavaScript, ma un binario.</li>
+</ol>
+<p><strong>Limite importante:</strong> WebAssembly <strong>non può accedere direttamente al DOM, al canvas, o a <code>console.log</code></strong>. Dovresti esporre queste API tramite "import" dal JavaScript host, il che complica molto l'architettura per una libreria grafica come gamma-2d. La ricerca accademica conferma che la transpilazione JS→Wasm è promettente per l'offuscamento ma ancora limitata (circa 1/3 del codice reale è convertibile automaticamente).</p>
+<p>Per una libreria canvas come la tua, <strong>non è una strada pratica</strong> a meno di riscrivere grosse porzioni in AssemblyScript.</p>
+<hr>
+<h3 id="header-4">💼 Livello 6 — Soluzioni commerciali</h3>
+<p>Se il progetto ha valore commerciale, gli strumenti professionali offrono un pacchetto completo:</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Cosa offre di unico</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Jscrambler</strong></td>
+<td>Protezione client-side completa, anti-tamper, licensing, resistenza a LLM</td>
+</tr>
+<tr>
+<td><strong>PreEmptive JSDefender</strong></td>
+<td>Offuscamento a strati + runtime integrity checks, usato in ambito enterprise</td>
+</tr>
+<tr>
+<td><strong>AxProtector JavaScript</strong> (Wibu)</td>
+<td>Crittografia del codice <strong>prima dell'esecuzione</strong>, con licensing integrato via CodeMeter</td>
+</tr>
+</tbody></table>
+<p>Questi tool partono da qualche centinaio di euro/anno e sono pensati per aziende che distribuiscono software commerciale.</p>
+<hr>
+<h3 id="header-5">💎 Riepilogo pratico per il tuo caso</h3>
+<p>Per <strong>gamma-2d</strong>, il miglior compromesso tra sforzo e risultato è:</p>
+<ol>
+<li><strong>Sostituisci il comando di offuscamento attuale</strong> con la configurazione "max" di <code>javascript-obfuscator</code> (Livello 3). È un cambio di una riga nel tuo flusso di build e alza drasticamente l'asticella.</li>
+<li>Se vuoi esagerare senza riscrivere nulla, prova <strong><code>vm-obfuscator-pro</code> con preset <code>max</code></strong> (Livello 4) e confronta dimensione e performance. Se il gioco regge i 60 FPS, hai un livello di protezione vicino a quello commerciale.</li>
+<li><strong>Non inseguire il "100%"</strong>: nessun tool te lo può garantire. L'obiettivo realistico è rendere il codice <strong>"non vale la pena"</strong> da reversare rispetto al valore che contiene.</li>
+</ol>
+<p>Il bundler che hai già funziona perfettamente con uno qualsiasi di questi output: ti basta sostituire il file <code>gamma-2d_ob.js</code> con la versione generata dal tool più aggressivo, senza toccare il codice Python. 🎯</p>
+</body>
+</html>
